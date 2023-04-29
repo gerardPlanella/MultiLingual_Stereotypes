@@ -6,4 +6,4 @@ def load_model():
 
 if __name__ == "__main__":
     unmasker = pipeline('fill-mask', model='xlm-roberta-base', top_k = 10)
-    print(unmasker("Why do madridistas think that catalan people are so <mask> ?."))
+    print(unmasker("Why do <mask> hate <mask> ?"))

@@ -3,7 +3,7 @@ import json
 
 def load_lexicon(path):
     # Parse the lexicon and store it in a dictionary
-    languages = {"English", "French", "Serbian", "Greek", "Catalan", "Spanish"}
+    languages = {"English Word", "French", "Serbian", "Greek", "Catalan", "Spanish"}
 
     emolex = {}
     with open(path, "r", encoding="utf-8") as f:
@@ -17,6 +17,8 @@ def load_lexicon(path):
                 for i in lang_indices:
                     word = values[i]
                     emolex[word] = emotion_vector
+            else:
+                print(len(values))
 
     with open("data/emolex.json", "w", encoding="utf-8") as f:
         json.dump(emolex, f, ensure_ascii=False, indent=4)
