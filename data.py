@@ -11,6 +11,7 @@ class Stem_Language(Enum):
     Greek = False
     Croatian = False
     Catalan = False
+    Serbian = False
 
 class Language(Enum):
     English = "english"
@@ -19,6 +20,7 @@ class Language(Enum):
     Greek = "greek"
     Croatian = "croatian"
     Catalan = "catalan"
+    Serbian = "serbian"
 
     @classmethod
     def to_dict(cls):
@@ -41,6 +43,7 @@ class NRC_Language(Enum):
     Greek = "Greek"
     Croatian = "Croatian"
     Catalan = "Catalan"
+    Serbian = "Serbian"
 
     @classmethod
     def to_list(cls) -> List[str]:

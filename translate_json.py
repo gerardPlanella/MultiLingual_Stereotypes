@@ -16,7 +16,8 @@ def translate_json(input_path: str, output_path: str, input_lang: Language, outp
         Language.French: "fr",
         Language.Greek: "el",
         Language.Croatian: "hr",
-        Language.Catalan: "ca"
+        Language.Catalan: "ca",
+        Language.Serbian: "sr"
     }
 
     input_lang_code = lang_codes[input_lang]
@@ -75,10 +76,10 @@ def translate_json(input_path: str, output_path: str, input_lang: Language, outp
 
 
 if __name__=='__main__':
-    input_path = "social_groups\english_data.json"
-    output_path = "social_groups\croatian_data.json"
+    input_path = "social_groups\\english_data.json"
+    output_path = "social_groups\\serbian_data.json"
     input_lang = Language.English
-    output_lang = Language.Croatian
+    output_lang = Language.Serbian
     ignored_words = ["<mask>", "<item>"]
 
     translate_json(input_path, output_path, input_lang, output_lang, ignored_words)
