@@ -11,7 +11,7 @@ def load_lexicon(path):
         header = f.readline().strip().split('\t')
         lang_indices = [i for i, lang in enumerate(header) if lang in languages]
 
-        french_stemmer = SnowballStemmer("french")
+        # french_stemmer = SnowballStemmer("french")
         
         for line in f.readlines():
             values = line.strip().split('\t')
@@ -19,13 +19,13 @@ def load_lexicon(path):
                 emotion_vector = [int(values[i]) for i in range(1, 11)]
                 for i in lang_indices:
                     word = values[i]
-                    if header[i] == "French":
-                        word = french_stemmer.stem(word)
+                    # if header[i] == "French":
+                    #     word = french_stemmer.stem(word)
                     emolex[word] = emotion_vector
             else:
                 print(len(values))
 
-    with open("data/emolex.json", "w", encoding="utf-8") as f:
+    with open("data/emolex_no_stemming_french.json", "w", encoding="utf-8") as f:
         json.dump(emolex, f, ensure_ascii=False, indent=4)
         
     print("EmoLex dictionary saved to emolex.json")
