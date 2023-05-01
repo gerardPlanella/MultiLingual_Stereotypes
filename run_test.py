@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import pandas as pd
 from scipy.stats import spearmanr
-
+from data import Language, Emotions
 from nltk.stem.snowball import SnowballStemmer
 
 
@@ -14,16 +14,24 @@ nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
 
-def emotion_per_groups(prompts, social_groups, language):
 
-    if language == 'french':    
-        stemmer = SnowballStemmer("french")
-
+def emotion_per_groups(prompts, social_groups, 
+                       language:Language, model_name, 
+                       model_attributes, 
+                       stemming = False, 
+                       lex_path = "data/emolex.json", 
+                       verbose = False):
+    stemmer = None
+    if stemming:
+        if language.value in SnowballStemmer.languages:
+            stemmer = SnowballStemmer(language.value)
+        else:
+            raise Exception(f"No stemmer found for language {language.value}")
     #Load the LM 
-    unmasker = load_model()
+    unmasker = load_model(model_name, model_attributes)
 
     #load emotion lexicon dictionnary
-    with open("data/emolex.json", "r", encoding="utf-8") as f:
+    with open(lex_path, "r", encoding="utf-8") as f:
         emolex = json.load(f)
     
     k = 0
@@ -33,28 +41,32 @@ def emotion_per_groups(prompts, social_groups, language):
         for j, prompt in enumerate(prompts):
             preds = unmasker(prompt.format(group))
             for pred in preds:
-                if language =='french':
+                if stemmer is not None:
                     word_pred = stemmer.stem(pred['token_str'])
                 else:
                     word_pred = pred["token_str"]
+
                 if word_pred in emolex:
                     matrix_emotion[i] += emolex[word_pred]
                     k += 1
                 else:
                     l += 1
-    print(f"{l} words are not in the lexicon")
-    print(f"{k} words are in the lexicon")
 
-    column_labels = ["anger","anticipation","disgust","fear","joy","negative", "positive",	"sadness", "surprise", "trust"]
+    if verbose:
+        print(f"{l} words are not in the lexicon")
+        print(f"{k} words are in the lexicon")
+
+    column_labels = Emotions.to_list()
     df = pd.DataFrame(matrix_emotion, index=social_groups, columns=column_labels)
-    print(df)
+    if verbose:
+        print(df)
     return matrix_emotion
 
-def spearman_correlation(matrix_1, matrix_2):
-    liste_correlation = []
+def spearman_correlation(matrix_1:pd.DataFrame, matrix_2:pd.DataFrame):
+    list_correlation = []
     for i in range(len(matrix_1)):
-        liste_correlation.append(spearmanr(matrix_1[i], matrix_2[i])[0])
-    return liste_correlation
+        list_correlation.append(spearmanr(matrix_1[i], matrix_2[i])[0])
+    return list_correlation
 
 if __name__ == "__main__":
     social_groups_english = [
