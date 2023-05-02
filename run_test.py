@@ -6,14 +6,17 @@ import pandas as pd
 from scipy.stats import spearmanr
 from data import Language, Emotions
 from nltk.stem.snowball import SnowballStemmer
-
-
+import argparse
 import nltk
+import json
+import os
+
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
 
+social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle"]
 
 def emotion_per_groups(prompts, social_groups, 
                        language:Language, model_name, 
@@ -68,7 +71,93 @@ def spearman_correlation(matrix_1:pd.DataFrame, matrix_2:pd.DataFrame):
         list_correlation.append(spearmanr(matrix_1[i], matrix_2[i])[0])
     return list_correlation
 
+def load_social_group_file(path):
+    try:
+        with open(path) as f:
+            data = json.load(f) 
+        return True, data
+    except Exception as e:
+        print(e.message)
+        return False, None
+    
+def check_n_prompts_groups(data1, data2, local_prompts:bool):
+    ok = True
+    if "general_prompts" not in data1 or "general_prompts" not in data2:
+        return False
+    
+    for group_key in data1:
+        if group_key == "general_prompts":
+            if not isinstance(data1[group_key], list) or not isinstance(data2[group_key], list):
+                ok = False
+                break
+            if len(data1[group_key]) != len(data2[group_key]) or len(data1[group_key] == 0):
+                ok = False
+                break
+            
+            for prompt in data1[group_key] + data2[group_key]:
+                if not prompt.contains("{}") or not prompt.contains("<mask>"):
+                    ok = False
+                    return ok
+                
+
+        else:
+            if "items" not in data1[group_key] or "items" not in data2[group_key]:
+                ok = False
+                break
+            
+            if len(data1[group_key]["items"]) != len(data2[group_key]["items"]):
+                ok = False
+                break
+            
+            if local_prompts:
+                if "prompts" not in data1[group_key] or "prompts" not in data2[group_key]:
+                    ok = False
+                    break
+                if len(data1[group_key]["prompts"]) != len(data2[group_key]["prompts"]):
+                    ok = False
+                    break
+                for prompt in data1[group_key]["prompts"] + data2[group_key]["prompts"]:
+                    if not prompt.contains("{}") or not prompt.contains("<mask>"):
+                        ok = False
+                        return ok
+
+    return ok
+
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
+    parser.add_argument('-sg', '--social_groups', nargs='+', default=social_groups, help="Social Groups to Analyse.")
+    parser.add_argument('--language_1_path', type=str, default="english", help="Language 1 to analyse.")
+    parser.add_argument('--language_2_path', type=str, default="spanish", help="Language 2 to analyse.")
+    parser.add_argument('--output_dir', type=str, default="out/", help="Output directory for generated data.")
+    parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
+    parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
+    parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
+
+    args = parser.parse_args()
+
+    args.language_1 = args.language_1_path.split("/")[-1].split("_")[0]
+    args.language_2 = args.language_2_path.split("/")[-1].split("_")[0]
+    
+    assert Language.has_value(args.language_1)
+    assert Language.has_value(args.language_2)
+
+    args.language_1 = Language(args.language_1)
+    args.language_2 = Language(args.language_2)
+
+    assert os.path.exists(args.language_1_path)
+    assert os.path.exists(args.language_2_path)
+
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
+    language_data_1 = load_social_group_file(args.language_1_path)
+    language_data_2 = load_social_group_file(args.language_2_path)
+    file_formats_ok = check_n_prompts_groups(language_data_1, language_data_2, args.use_local_prompts)
+
+
+    assert file_formats_ok
+
     social_groups_english = [
     "young people",
     "old people",
