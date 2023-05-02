@@ -77,9 +77,9 @@ def translate_json(input_path: str, output_path: str, input_lang: Language, outp
 
 if __name__=='__main__':
     input_path = "social_groups\\english_data.json"
-    output_path = "social_groups\\serbian_data.json"
+    output_path = "social_groups\\greek_data.json"
     input_lang = Language.English
-    output_lang = Language.Serbian
+    output_lang = Language.Greek
     ignored_words = ["<mask>", "<item>"]
 
     translate_json(input_path, output_path, input_lang, output_lang, ignored_words)

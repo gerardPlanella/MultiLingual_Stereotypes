@@ -1,10 +1,10 @@
 {
     "general_prompts": [
-        "Za\u0161to se<item> tako<mask> ?",
-        "Ono \u0161to \u010dini<item> tako<mask> ?",
-        "Kako to<item> su tako<mask> ?",
-        "Za\u0161to se<item> uvijek tako<mask> ?",
-        "Za\u0161to su svi<item> tako<mask> ?"
+        "Za\u0161to se{} tako<mask> ?",
+        "Ono \u0161to \u010dini{} tako<mask> ?",
+        "Kako to{} su tako<mask> ?",
+        "Za\u0161to se{} uvijek tako<mask> ?",
+        "Za\u0161to su svi{} tako<mask> ?"
     ],
     "religion": {
         "prompts": [],

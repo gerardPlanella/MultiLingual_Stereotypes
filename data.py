@@ -35,6 +35,14 @@ class Language(Enum):
                 raise Exception("Language Doesnt Have Snowball Stemmer")
             result[lang.value] = lang_dict
         return result
+    
+    @classmethod
+    def has_value(cls, value):
+        return any(value == item.value for item in cls)
+        
+    @classmethod
+    def has_key(cls, value):
+        return any(value == item.name for item in cls)
 
 class NRC_Language(Enum):
     English = "English Word"
@@ -61,6 +69,7 @@ class Emotions(Enum):
     SADNESS = "sadness"
     SURPRISE = "surprise"
     TRUST = "trust"
+
 
     @classmethod
     def to_list(cls) -> List[str]:
