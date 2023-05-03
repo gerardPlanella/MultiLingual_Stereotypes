@@ -4,14 +4,7 @@ from nltk.stem import SnowballStemmer
 from enum import Enum
 from typing import List, Dict
 
-class Stem_Language(Enum):
-    English = False
-    Spanish = False
-    French = True
-    Greek = False
-    Croatian = False
-    Catalan = False
-    Serbian = False
+
 
 class Language(Enum):
     English = "english"
@@ -27,11 +20,10 @@ class Language(Enum):
         result = {}
         for lang in cls:
             stem_enabled = Stem_Language[lang.name].value
-            lang_dict = {'stem': stem_enabled, 'NRC': NRC_Language[lang.name].value}
+            lang_dict = {'stem': stem_enabled, 'NRC': NRC_Language[lang.name].value, 'stemmer': None}
             if stem_enabled and lang.value in SnowballStemmer.languages:
                 lang_dict['stemmer'] = SnowballStemmer(lang.value)
-            else:
-                lang_dict['stemmer'] = None
+            elif stem_enabled:
                 raise Exception("Language Doesnt Have Snowball Stemmer")
             result[lang.value] = lang_dict
         return result
@@ -100,6 +92,17 @@ def load_lexicon(path, language_dict, output_path="data/emolex.json"):
         json.dump(emolex, f, ensure_ascii=False, indent=4)
         
     print(f"EmoLex dictionary saved to {output_path}")
+
+
+#Manually set this for Stemming each language
+class Stem_Language(Enum):
+    English = False
+    Spanish = False
+    French = True
+    Greek = False
+    Croatian = False
+    Catalan = False
+    Serbian = False
 
 if __name__ == "__main__":
     output_path = "data/emolex.json"

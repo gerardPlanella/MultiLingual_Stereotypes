@@ -1,4 +1,4 @@
-from model import load_model
+from model import load_model, Models
 import json
 import numpy as np 
 from tqdm import tqdm
@@ -10,6 +10,7 @@ import argparse
 import nltk
 import json
 import os
+import pickle
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -19,8 +20,8 @@ nltk.download('averaged_perceptron_tagger')
 social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle"]
 
 def emotion_per_groups(prompts, social_groups, 
-                       language:Language, model_name, 
-                       model_attributes, 
+                       language:Language, model_name:Models, 
+                       model_attributes:dict, 
                        stemming = False, 
                        lex_path = "data/emolex.json", 
                        verbose = False):
@@ -90,12 +91,12 @@ def check_n_prompts_groups(data1, data2, local_prompts:bool):
             if not isinstance(data1[group_key], list) or not isinstance(data2[group_key], list):
                 ok = False
                 break
-            if len(data1[group_key]) != len(data2[group_key]) or len(data1[group_key] == 0):
+            if len(data1[group_key]) != len(data2[group_key]) or len(data1[group_key]) == 0:
                 ok = False
                 break
             
             for prompt in data1[group_key] + data2[group_key]:
-                if not prompt.contains("{}") or not prompt.contains("<mask>"):
+                if prompt.find("{}") == -1 or prompt.find("<mask>") == -1:
                     ok = False
                     return ok
                 
@@ -117,27 +118,49 @@ def check_n_prompts_groups(data1, data2, local_prompts:bool):
                     ok = False
                     break
                 for prompt in data1[group_key]["prompts"] + data2[group_key]["prompts"]:
-                    if not prompt.contains("{}") or not prompt.contains("<mask>"):
+                    if prompt.find("{}") == -1 or prompt.find("<mask>") == -1:
                         ok = False
                         return ok
 
     return ok
 
 
+def extract_prompts_groups(data:dict, groups:list, local_prompts:bool):
+    prompts = []
+    items = []
+
+    for key in data:
+        if key == "general_prompts":
+            prompts += data[key]
+        else:
+            if key in groups:
+                prompts += data[key]["prompts"]
+                items += data[key]["items"]
+                
+    return prompts, items
+
+                
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
-    parser.add_argument('-sg', '--social_groups', nargs='+', default=social_groups, help="Social Groups to Analyse.")
-    parser.add_argument('--language_1_path', type=str, default="english", help="Language 1 to analyse.")
-    parser.add_argument('--language_2_path', type=str, default="spanish", help="Language 2 to analyse.")
+    parser.add_argument('--social_groups', nargs='+', default=social_groups, help="Social Groups to Analyse.")
+    parser.add_argument('--language_1_path', type=str, default="social_groups\english_data.json", help="Language 1 to analyse.")
+    parser.add_argument('--language_2_path', type=str, default="social_groups\spanish_data.json", help="Language 2 to analyse.")
     parser.add_argument('--output_dir', type=str, default="out/", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
+    parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model Evaluated")
+    parser.add_argument('--model_top_k', type=int, default=10, help="Top K results used for matrix generation.")
+    parser.add_argument('--lexicon_path', type=str, default="data/emolex.json", help="Path to Lexicon.")
+    parser.add_argument('--verbose', action="store_true")
+    parser.add_argument('--no_output_saving', action="store_false")
 
     args = parser.parse_args()
 
-    args.language_1 = args.language_1_path.split("/")[-1].split("_")[0]
-    args.language_2 = args.language_2_path.split("/")[-1].split("_")[0]
+    args.language_1 = os.path.basename(args.language_1_path).split("_")[0]
+    args.language_2 = os.path.basename(args.language_2_path).split("_")[0]
     
     assert Language.has_value(args.language_1)
     assert Language.has_value(args.language_2)
@@ -148,109 +171,81 @@ if __name__ == "__main__":
     assert os.path.exists(args.language_1_path)
     assert os.path.exists(args.language_2_path)
 
-    if not os.path.exists(args.output_dir):
+    if not os.path.exists(args.output_dir) and not args.no_output_saving:
         os.makedirs(args.output_dir)
 
-    language_data_1 = load_social_group_file(args.language_1_path)
-    language_data_2 = load_social_group_file(args.language_2_path)
+    assert Models.has_value(args.model_name)
+
+    model = Models(args.model_name)
+    model_attributes = None
+
+    if model == Models.XLMR:
+        model_attributes = {
+            "pipeline":"fill-mask",
+            "top_k":args.model_top_k
+        }
+    
+    assert model_attributes is not None
+
+    if args.verbose:
+        print("Reading Social Group files")
+
+    ok1, language_data_1 = load_social_group_file(args.language_1_path)
+    ok2, language_data_2 = load_social_group_file(args.language_2_path)
+
+    assert ok1 and ok2 
+
+    if args.verbose:
+        print("Checking File formats")
+
     file_formats_ok = check_n_prompts_groups(language_data_1, language_data_2, args.use_local_prompts)
 
 
     assert file_formats_ok
 
-    social_groups_english = [
-    "young people",
-    "old people",
-    "Chinese",
-    "disabled",
-    "blacks"
-    ]
+    if args.verbose:
+        print("Extracting Social Group data")
 
-    social_groups_french = [
-    "les jeunes",
-    "les personnes âgées",
-    "les Chinois",
-    "les personnes handicapées",
-    "les noirs"
-    ]
+    prompts_language_1, social_groups_language_1 = extract_prompts_groups(language_data_1, args.social_groups, args.use_local_prompts)
+    prompts_language_2, social_groups_language_2 = extract_prompts_groups(language_data_2, args.social_groups, args.use_local_prompts)
 
-    countries = [
-    "Afghanistan",
-    "Argentina",
-    "Australia",
-    "Austria",
-    "Bangladesh",
-    "Belgium",
-    "Brazil",
-    "Cambodia",
-    "Canada",
-    "Chile",
-    "China",
-    "Colombia",
-    "Croatia",
-    "Cuba",
-    "Czech Republic",
-    "Denmark",
-    "Egypt",
-    "Finland",
-    "France",
-    "Germany",
-    "Ghana",
-    "Greece",
-    "Hungary",
-    "India",
-    "Indonesia",
-    "Iran",
-    "Iraq",
-    "Ireland",
-    "Israel",
-    "Italy",
-    "Jamaica",
-    "Japan",
-    "Kenya",
-    "Malaysia",
-    "Mexico",
-    "Morocco",
-    "Netherlands",
-    "New Zealand",
-    "Nigeria",
-    "Norway",
-    "Pakistan",
-    "Peru",
-    "Philippines",
-    "Poland",
-    "Portugal",
-    "Russia",
-    "Saudi Arabia",
-    "South Africa",
-    "South Korea",
-    "Spain",
-    "Sweden",
-    "Switzerland",
-    "Turkey",
-    "Ukraine",
-    "United Kingdom",
-    "United States",
-    "Venezuela",
-    "Vietnam",
-    "Zimbabwe"
-    ]
+    if args.verbose:
+        print("Computing Matrix 1")
 
-    prompts_people_english = []
-    prompts_people_english.append("Why are {} so <mask>?")
-    prompts_people_english.append("What makes {} so <mask>?")
-    prompts_people_english.append("How come {} are so <mask>?")
-    prompts_people_english.append("Why are {} always so <mask>?")
-    prompts_people_english.append("Why are all {} so <mask>?")
+    matrix_1 = emotion_per_groups(prompts_language_1, social_groups_language_1, args.language_1,
+                                  model, model_attributes,stemming = args.stem_1, 
+                                  lex_path=args.lexicon_path, verbose=args.verbose)
+    
+    if args.verbose:
+        print("Computing Matrix 2")
+    
+    matrix_2 = emotion_per_groups(prompts_language_2, social_groups_language_2, args.language_2,
+                                  model, model_attributes,stemming = args.stem_2, 
+                                  lex_path=args.lexicon_path, verbose=args.verbose)
+    
+    if args.verbose:
+        print("Computing Correlation")
 
-    prompts_people_french = []
-    prompts_people_french.append("Pourquoi {} sont-ils si <mask>?")
-    prompts_people_french.append("Qu'est-ce qui rend {} si <mask>?")
-    prompts_people_french.append("Comment se fait-il que {} soient si <mask>?")
-    prompts_people_french.append("Pourquoi {} sont-ils toujours si <mask>?")
-    prompts_people_french.append("Pourquoi tous {} sont-ils si <mask>?")
+    coeffs = spearman_correlation(matrix_1, matrix_2)
 
-    # matrix_1 = emotion_per_groups(prompts_people_english, social_groups_english)
-    matrix_2 = emotion_per_groups(prompts_people_french, social_groups_french, 'french')
-    # coeffs = spearman_correlation(matrix_1, matrix_2)
-    # print(coeffs)
+    if args.verbose:
+        print(f"----- Matrix for Language {args.language_1.name} --------")
+        print(matrix_1)
+        print(f"\n\n\n----- Matrix for Language {args.language_2.name} --------")
+        print(matrix_2)
+        print("\n\n\n------ Correlation Matrix -------")
+        print(coeffs)
+
+    if not args.no_output_saving:
+        if args.verbose:
+            print("Saving Data...")
+
+        matrix_1.to_pickle(args.output_dir + f"matrix_{args.language_1.name}.pkl")
+        matrix_2.to_pickle(args.output_dir + f"matrix_{args.language_2.name}.pkl")
+        with open(args.output_dir + f"correlation_{args.language_1.name}_{args.language_2.name}.pkl", 'wb') as f:
+            pickle.dump(coeffs, f)
+        
+        if args.verbose:
+            print("Data Saved.")
+    
+    
