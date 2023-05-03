@@ -114,4 +114,6 @@ dependencies:
   - zipp=3.15.0
   - zlib=1.2.13
   - zstd=1.5.5
+  - pip:
+    - google-cloud-translate==2.0.1
 prefix: C:\Users\rober\anaconda3\envs\multilingual
