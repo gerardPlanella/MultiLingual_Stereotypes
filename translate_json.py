@@ -3,10 +3,9 @@ import json
 from typing import List
 from data import Language
 
-
-
 import os 
 
+#To create your own API credentials file check https://cloud.google.com/translate/docs/setup
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] ="data\multilingualstereotypes-b8b5de5e15d6.json"
 
 def translate_json(input_path: str, output_path: str, input_lang: Language, output_lang: Language, ignored_words: List[str]):
