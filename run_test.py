@@ -72,7 +72,7 @@ def emotion_per_groups(prompts:dict, social_groups,
     df = pd.DataFrame(matrix_emotion, index=social_groups, columns=column_labels)
     if verbose:
         print(df)
-    return matrix_emotion
+    return df
 
 def spearman_correlation(matrix_1:pd.DataFrame, matrix_2:pd.DataFrame):
     list_correlation = []
@@ -258,8 +258,8 @@ if __name__ == "__main__":
         if args.verbose:
             print("Saving Data...")
 
-        matrix_1.to_pickle(args.output_dir + f"matrix_{args.language_1.name}_{args.stem_1}_{args.social_groups.join('_')}.pkl")
-        matrix_2.to_pickle(args.output_dir + f"matrix_{args.language_2.name}_{args.stem_2}_{args.social_groups.join('_')}.pkl")
+        matrix_1.to_csv(args.output_dir + f"matrix_{args.language_1.name}_{args.stem_1}_{args.social_groups.join('_')}.csv", index = False)
+        matrix_2.to_csv(args.output_dir + f"matrix_{args.language_2.name}_{args.stem_2}_{args.social_groups.join('_')}.csv", index = False)
         with open(args.output_dir + f"correlation_{args.language_1.name}_{args.language_2.name}_{args.social_groups.join('_')}.pkl", 'wb') as f:
             pickle.dump(coeffs, f)
         
