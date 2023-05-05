@@ -127,15 +127,21 @@ def check_n_prompts_groups(data1, data2, local_prompts:bool):
 
 
 def extract_prompts_groups(data:dict, groups:list, local_prompts:bool):
-    prompts = []
+    prompts = {}
     items = []
+
 
     for key in data:
         if key == "general_prompts":
-            prompts += data[key]
+            if "general" not in prompts:
+                prompts["general"] = []
+            prompts["general"] += data[key]
         else:
             if key in groups:
-                prompts += data[key]["prompts"]
+                if local_prompts:
+                    if key not in prompts:
+                        prompts[key] = []
+                    prompts[key] += data[key]["prompts"]
                 items += data[key]["items"]
                 
     return prompts, items
