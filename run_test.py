@@ -212,7 +212,7 @@ if __name__ == "__main__":
 
     if args.verbose:
         print("Computing Matrix 1")
-
+    
     matrix_1 = emotion_per_groups(prompts_language_1, social_groups_language_1, args.language_1,
                                   model, model_attributes,stemming = args.stem_1, 
                                   lex_path=args.lexicon_path, verbose=args.verbose)
@@ -244,8 +244,8 @@ if __name__ == "__main__":
         if args.verbose:
             print("Saving Data...")
 
-        matrix_1.to_pickle(args.output_dir + f"matrix_{args.language_1.name}_{args.social_groups.join('_')}.pkl")
-        matrix_2.to_pickle(args.output_dir + f"matrix_{args.language_2.name}_{args.social_groups.join('_')}.pkl")
+        matrix_1.to_pickle(args.output_dir + f"matrix_{args.language_1.name}_{args.stem_1}_{args.social_groups.join('_')}.pkl")
+        matrix_2.to_pickle(args.output_dir + f"matrix_{args.language_2.name}_{args.stem_2}_{args.social_groups.join('_')}.pkl")
         with open(args.output_dir + f"correlation_{args.language_1.name}_{args.language_2.name}_{args.social_groups.join('_')}.pkl", 'wb') as f:
             pickle.dump(coeffs, f)
         
