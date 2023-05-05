@@ -19,12 +19,15 @@ nltk.download('averaged_perceptron_tagger')
 
 social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle"]
 
-def emotion_per_groups(prompts, social_groups, 
+def emotion_per_groups(prompts:dict, social_groups, 
                        language:Language, model_name:Models, 
                        model_attributes:dict, 
                        stemming = False, 
                        lex_path = "data/emolex.json", 
                        verbose = False):
+    
+    assert "general" in prompts
+    
     stemmer = None
     if stemming:
         if language.value in SnowballStemmer.languages:
@@ -42,7 +45,12 @@ def emotion_per_groups(prompts, social_groups,
     l = 0
     matrix_emotion = np.zeros((len(social_groups), len(emolex["sadly"])))
     for i,group in tqdm(enumerate(social_groups)):
-        for j, prompt in enumerate(prompts):
+        if group in prompts: #Local prompts
+            prompt_list = prompts[group]
+        else:
+            prompt_list = prompts["general"]
+
+        for j, prompt in enumerate(prompt_list):
             preds = unmasker(prompt.format(group))
             for pred in preds:
                 if stemmer is not None:
@@ -127,15 +135,21 @@ def check_n_prompts_groups(data1, data2, local_prompts:bool):
 
 
 def extract_prompts_groups(data:dict, groups:list, local_prompts:bool):
-    prompts = []
+    prompts = {}
     items = []
+
 
     for key in data:
         if key == "general_prompts":
-            prompts += data[key]
+            if "general" not in prompts:
+                prompts["general"] = []
+            prompts["general"] += data[key]
         else:
             if key in groups:
-                prompts += data[key]["prompts"]
+                if local_prompts:
+                    if key not in prompts:
+                        prompts[key] = []
+                    prompts[key] += data[key]["prompts"]
                 items += data[key]["items"]
                 
     return prompts, items
