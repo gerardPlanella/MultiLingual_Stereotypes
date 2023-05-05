@@ -58,8 +58,6 @@
             "los padres",
             "los abuelos",
             "las abuelas",
-            "las mujeres", #Wives same as Women
-            "los maridos",
             "las esposas",
             "los esposos",
             "las colegialas",
@@ -189,7 +187,6 @@
             "los padres asiáticos",
             "los padres blancos",
             "los padres negros",
-            "los padres negros", #Fathers same as parents
             "las latinas",
             "los latinos",
             "la gente latina",
@@ -408,7 +405,7 @@
         "items": [
             "los hipsters",
             "los nerds",
-            "los rednecks",
+            "los paletos",
             "la gente sin techo",
             "los feministas",
             "la gente rica",
@@ -420,11 +417,10 @@
             "los hippies",
             "los frikis",
             "los góticos",
-            "los punks",
+            "los punkis",
             "los californianos",
             "los famosos",
-            "las pelirrojos",
-            "jengibre" #No word for ginger
+            "las pelirrojos"
         ]
     }
 }
