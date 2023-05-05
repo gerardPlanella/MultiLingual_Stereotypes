@@ -36,7 +36,7 @@ def translate_json(input_path: str, output_path: str, input_lang: Language, outp
             prompts = input_json[category]
             translated_prompts = []
             for prompt in prompts:
-                #print(prompt)
+                print(prompt)
                 translation = translate_client.translate(prompt, source_language=input_lang_code, target_language=output_lang_code)
                 translation = translation['translatedText'].encode('utf-8').decode('utf-8')
                 translated_prompts.append(translation)
@@ -51,7 +51,7 @@ def translate_json(input_path: str, output_path: str, input_lang: Language, outp
             # Translate the prompts
             translated_prompts = []
             for prompt in prompts:
-                #print(prompt)
+                print(prompt)
                 translation = translate_client.translate(prompt, source_language=input_lang_code, target_language=output_lang_code)
                 translation = translation['translatedText'].encode('utf-8').decode('utf-8')
                 translated_prompts.append(translation)
@@ -59,7 +59,7 @@ def translate_json(input_path: str, output_path: str, input_lang: Language, outp
             # Translate the items
             translated_items = []
             for item in items:
-                #print(item)
+                print(item)
                 translation = translate_client.translate(item, source_language=input_lang_code, target_language=output_lang_code)
                 translation = translation['translatedText'].encode('utf-8').decode('utf-8')
                 translated_items.append(translation)
@@ -75,10 +75,10 @@ def translate_json(input_path: str, output_path: str, input_lang: Language, outp
 
 
 if __name__=='__main__':
-    input_path = "social_groups\\english_data.json"
-    output_path = "social_groups\\greek_data.json"
-    input_lang = Language.English
-    output_lang = Language.Greek
-    ignored_words = ["<mask>", "<item>"]
+    input_path = "social_groups\\spanish_data.json"
+    output_path = "social_groups\\catalan_data_v2.json"
+    input_lang = Language.Spanish
+    output_lang = Language.Catalan
+    ignored_words = ["<mask>"]
 
     translate_json(input_path, output_path, input_lang, output_lang, ignored_words)
