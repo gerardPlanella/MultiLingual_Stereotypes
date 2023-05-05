@@ -70,7 +70,8 @@ def spearman_correlation(matrix_1:pd.DataFrame, matrix_2:pd.DataFrame):
     list_correlation = []
     for i in range(len(matrix_1)):
         list_correlation.append(spearmanr(matrix_1[i], matrix_2[i])[0])
-    return list_correlation
+    mean = np.mean(list_correlation)
+    return list_correlation, mean
 
 def load_social_group_file(path):
     try:
@@ -145,8 +146,8 @@ def extract_prompts_groups(data:dict, groups:list, local_prompts:bool):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
     parser.add_argument('--social_groups', nargs='+', default=social_groups, help="Social Groups to Analyse.")
-    parser.add_argument('--language_1_path', type=str, default="social_groups\english_data.json", help="Language 1 to analyse.")
-    parser.add_argument('--language_2_path', type=str, default="social_groups\spanish_data.json", help="Language 2 to analyse.")
+    parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
+    parser.add_argument('--language_2_path', type=str, default="social_groups/spanish_data.json", help="Language 2 to analyse.")
     parser.add_argument('--output_dir', type=str, default="out/", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
@@ -233,16 +234,19 @@ if __name__ == "__main__":
         print(matrix_1)
         print(f"\n\n\n----- Matrix for Language {args.language_2.name} --------")
         print(matrix_2)
-        print("\n\n\n------ Correlation Matrix -------")
-        print(coeffs)
+        print("\n\n\n------ Correlation Vector -------")
+        print(coeffs[0])
+        print("\n\n\n------ Mean of Correlation -------")
+        print(coeffs[1])
+
 
     if not args.no_output_saving:
         if args.verbose:
             print("Saving Data...")
 
-        matrix_1.to_pickle(args.output_dir + f"matrix_{args.language_1.name}.pkl")
-        matrix_2.to_pickle(args.output_dir + f"matrix_{args.language_2.name}.pkl")
-        with open(args.output_dir + f"correlation_{args.language_1.name}_{args.language_2.name}.pkl", 'wb') as f:
+        matrix_1.to_pickle(args.output_dir + f"matrix_{args.language_1.name}_{args.social_groups.join('_')}.pkl")
+        matrix_2.to_pickle(args.output_dir + f"matrix_{args.language_2.name}_{args.social_groups.join('_')}.pkl")
+        with open(args.output_dir + f"correlation_{args.language_1.name}_{args.language_2.name}_{args.social_groups.join('_')}.pkl", 'wb') as f:
             pickle.dump(coeffs, f)
         
         if args.verbose:
