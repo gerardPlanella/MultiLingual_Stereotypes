@@ -42,7 +42,12 @@ def emotion_per_groups(prompts, social_groups,
     l = 0
     matrix_emotion = np.zeros((len(social_groups), len(emolex["sadly"])))
     for i,group in tqdm(enumerate(social_groups)):
-        for j, prompt in enumerate(prompts):
+        if group in prompts: #Local prompts
+            prompt_list = prompts[group]
+        else:
+            prompt_list = prompts["general"]
+
+        for j, prompt in enumerate(prompt_list):
             preds = unmasker(prompt.format(group))
             for pred in preds:
                 if stemmer is not None:
