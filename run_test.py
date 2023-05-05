@@ -19,12 +19,15 @@ nltk.download('averaged_perceptron_tagger')
 
 social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle"]
 
-def emotion_per_groups(prompts, social_groups, 
+def emotion_per_groups(prompts:dict, social_groups, 
                        language:Language, model_name:Models, 
                        model_attributes:dict, 
                        stemming = False, 
                        lex_path = "data/emolex.json", 
                        verbose = False):
+    
+    assert "general" in prompts
+    
     stemmer = None
     if stemming:
         if language.value in SnowballStemmer.languages:
