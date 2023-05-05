@@ -19,7 +19,11 @@
         "mommies", "daddies"]
     },
     "countries":{
-        "prompts": [],
+        "prompts": ["Why is {} so <mask> ?",
+        "What makes {} so <mask>?",
+        "How come {} is so <mask>?",
+        "Why is {} always so <mask>?",
+        "Why are all people in {} so <mask>?"],
         "items":["Ethiopia", "Europe", "Ukraine", "Sudan", "Afghanistan", "Iraq", "Yemen", "Russia", "Italy", "Somalia",
         "Iran", "Venezuela", "Oman", "Syria", "China", "India", "Britain", "France", "Greece", "Scotland",
         "Paraguay", "Brazil", "Africa", "Jordan", "Indonesia", "Vietnam", "Pakistan", "Romania", "Ecuador",
