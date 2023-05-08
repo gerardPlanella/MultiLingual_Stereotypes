@@ -12,6 +12,7 @@ import json
 import os
 import pickle
 from snowballstemmer import stemmer
+from sklearn.metrics.pairwise import cosine_similarity
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -142,6 +143,33 @@ def check_n_prompts_groups(data1, data2, local_prompts:bool):
     return ok
 
 
+def similarity_matrix(matrix):
+    """
+    Calculate the cosine similarity between all pairs of vectors in the input matrix.
+    
+    Args:
+        matrix (np.array): A 2D NumPy array or list of lists where each row represents a group's vector.
+        
+    Returns:
+        np.array: A 2D NumPy array representing the similarity matrix with cosine similarity values.
+    """
+    # Convert input to a NumPy array if not already one
+    matrix = np.array(matrix)
+
+    # Get the number of groups
+    number_groups = matrix.shape[0]
+
+    # Initialize an empty similarity matrix
+    similarity_matrix = np.zeros((number_groups, number_groups))
+
+    # Compute cosine similarity for each pair of vectors and fill the similarity matrix
+    for i in range(similarity_matrix.shape[0]):
+        for j in range(similarity_matrix.shape[1]):
+            similarity_matrix[i, j] = cosine_similarity([matrix[i, :]], [matrix[j, :]])
+
+    return similarity_matrix
+
+
 def extract_prompts_groups(data:dict, groups:list, local_prompts:bool):
     prompts = {}
     items = []
@@ -167,16 +195,17 @@ def extract_prompts_groups(data:dict, groups:list, local_prompts:bool):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
-    parser.add_argument('--social_groups', nargs='+', default=['religion'], help="Social Groups to Analyse.")
+    parser.add_argument('--social_groups', nargs='+', default=['race'], help="Social Groups to Analyse.")
     parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
-    parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
+    parser.add_argument('--language_2_path', type=str, default="social_groups/french_data.json", help="Language 2 to analyse.")
     parser.add_argument('--output_dir', type=str, default="out/", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model Evaluated")
     parser.add_argument('--model_top_k', type=int, default=200, help="Top K results used for matrix generation.")
-    parser.add_argument('--lexicon_path', type=str, default="data/emolex_stemming_french.json", help="Path to Lexicon.")
+    parser.add_argument('--lexicon_path_1', type=str, default="data/emolex_stemming_french.json", help="Path to Lexicon.")
+    parser.add_argument('--lexicon_path_2', type=str, default="data/emolex_no_stemming_french.json", help="Path to Lexicon.")
     parser.add_argument('--verbose', action="store_true")
     parser.add_argument('--no_output_saving', action="store_false")
 
@@ -237,19 +266,24 @@ if __name__ == "__main__":
     
     matrix_1, df1 = emotion_per_groups(prompts_language_1, social_groups_language_1, args.language_1,
                                   model, model_attributes,stemming = args.stem_1, 
-                                  lex_path=args.lexicon_path, verbose=args.verbose)
+                                  lex_path=args.lexicon_path_1, verbose=args.verbose)
     
     if args.verbose:
         print("Computing Matrix 2")
     
     matrix_2, df2 = emotion_per_groups(prompts_language_2, social_groups_language_2, args.language_2,
                                   model, model_attributes,stemming = args.stem_2, 
-                                  lex_path=args.lexicon_path, verbose=args.verbose)
-    
+                                  lex_path=args.lexicon_path_2, verbose=args.verbose)
+
+
+    sim_matrix_1 = similarity_matrix(matrix_1)
+    sim_matrix_2 = similarity_matrix(matrix_2)
+
     if args.verbose:
         print("Computing Correlation")
 
-    coeffs = spearman_correlation(matrix_1, matrix_2)
+    coeffs_emotion = spearman_correlation(matrix_1, matrix_2)
+    coeffs_sim = spearman_correlation(sim_matrix_1, sim_matrix_2)
 
     if args.verbose:
         print(f"----- Matrix for Language {args.language_1.name} --------")
@@ -257,9 +291,13 @@ if __name__ == "__main__":
         print(f"\n\n\n----- Matrix for Language {args.language_2.name} --------")
         print(df2)
         print("\n\n\n------ Correlation Vector -------")
-        print(coeffs[0])
+        print(coeffs_emotion[0])
         print("\n\n\n------ Mean of Correlation -------")
-        print(coeffs[1])
+        print(coeffs_emotion[1])
+        print("\n\n\n------ Correlation Vector RSA -------")
+        print(coeffs_sim[0])
+        print("\n\n\n------ Mean of Correlation RSA -------")
+        print(coeffs_sim[1])
 
 
     if not args.no_output_saving:
@@ -269,7 +307,9 @@ if __name__ == "__main__":
         df1.to_csv(f"{args.output_dir}/matrix_{args.language_1.name}_{args.stem_1}_{args.social_groups}.csv", index = False)
         df2.to_csv(f"{args.output_dir}/matrix_{args.language_2.name}_{args.stem_2}_{args.social_groups}.csv", index = False)
         with open(args.output_dir + f"correlation_{args.language_1.name}_{args.language_2.name}_{args.social_groups}.pkl", 'wb') as f:
-            pickle.dump(coeffs, f)
+            pickle.dump(coeffs_emotion, f)
+        with open(args.output_dir + f"correlation_RSA_{args.language_1.name}_{args.language_2.name}_{args.social_groups}.pkl", 'wb') as f:
+            pickle.dump(coeffs_sim, f)
         
         if args.verbose:
             print("Data Saved.")
