@@ -3,6 +3,7 @@ import json
 from nltk.stem import SnowballStemmer
 from enum import Enum
 from typing import List, Dict
+from snowballstemmer import stemmer
 
 
 
@@ -23,6 +24,9 @@ class Language(Enum):
             lang_dict = {'stem': stem_enabled, 'NRC': NRC_Language[lang.name].value, 'stemmer': None}
             if stem_enabled and lang.value in SnowballStemmer.languages:
                 lang_dict['stemmer'] = SnowballStemmer(lang.value)
+            elif stem_enabled and lang.name == "Greek":
+                lang_dict['stemmer'] = stemmer("greek")
+
             elif stem_enabled:
                 raise Exception("Language Doesnt Have Snowball Stemmer")
             result[lang.value] = lang_dict
@@ -82,8 +86,10 @@ def load_lexicon(path, language_dict, output_path="data/emolex.json"):
                 for i in lang_indices:
                     word = values[i]
                     lang = Language[NRC_Language(header[i]).name].value
-                    if language_dict[lang]["stem"]:
+                    if language_dict[lang]["stem"] and lang!="greek": # skip if it is greek lang needs stemming, and do it with a diff stem
                         word = language_dict[lang]["stemmer"].stem(word)
+                    elif language_dict[lang]["stem"] and lang=="greek":
+                        word = language_dict[lang]["stemmer"].stemWord(word)
                     emolex[word] = emotion_vector
             else:
                 continue
@@ -99,7 +105,7 @@ class Stem_Language(Enum):
     English = False
     Spanish = False
     French = True
-    Greek = False
+    Greek = True
     Croatian = False
     Catalan = False
     Serbian = False

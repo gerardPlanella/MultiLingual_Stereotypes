@@ -11,6 +11,7 @@ import nltk
 import json
 import os
 import pickle
+from snowballstemmer import stemmer
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -28,10 +29,14 @@ def emotion_per_groups(prompts:dict, social_groups,
     
     assert "general" in prompts
     
-    stemmer = None
-    if stemming:
+    use_stemmer = None
+
+    if language.value == "greek" and stemming==True:
+        use_stemmer = stemmer("greek")
+
+    if stemming and language.value != "greek":
         if language.value in SnowballStemmer.languages:
-            stemmer = SnowballStemmer(language.value)
+            use_stemmer = SnowballStemmer(language.value)
         else:
             raise Exception(f"No stemmer found for language {language.value}")
     #Load the LM 
@@ -53,8 +58,10 @@ def emotion_per_groups(prompts:dict, social_groups,
         for j, prompt in enumerate(prompt_list):
             preds = unmasker(prompt.format(group))
             for pred in preds:
-                if stemmer is not None:
-                    word_pred = stemmer.stem(pred['token_str'])
+                if use_stemmer is not None and language.value!="greek":
+                    word_pred = use_stemmer.stem(pred['token_str'])
+                elif language.value=="greek" and stemming == True:
+                    word_pred = use_stemmer.stemWord(pred["token_str"])
                 else:
                     word_pred = pred["token_str"]
 
