@@ -41,6 +41,41 @@ sexuality_groups              0.893                 0.294
 lifestyle_groups              0.8697                0.561
 
 
+Results of Croatian(30%) vs English : 
+                    Spearman Correlation    Spearman Correlation RSA
+ages_groups                  0.746                  0.400
+gender_groups                0.631                  0.213
+race_groups                  0.583                  0.197
+profession_groups            0.779                  0.338
+religious_groups             0.683                  0.298
+political_groups             0.751                  0.638
+sexuality_groups             0.696                  0.259
+lifestyle_groups             0.708                  0.145
+
+
+Results of Croatian vs French Stemmed : 
+                    Spearman Correlation    Spearman Correlation RSA
+ages_groups                    0.745                0.264
+gender_groups                  0.761                0.156
+race_groups                    0.770                0.210
+profession_groups              0.817                0.244
+religious_groups               0.755                0.330
+political_groups               0.837                0.460
+sexuality_groups               0.686                0.203
+lifestyle_groups               0.743                0.151
+
+
+Results of Croatian vs Greek not stemmed (17%) : 
+                    Spearman Correlation    Spearman Correlation RSA
+ages_groups                       0.312             0.477 
+gender_groups                     0.272             0.071   
+race_groups                       0.267             0.123
+profession_groups                 0.372             0.108        
+religious_groups                  0.235             0.376
+political_groups                  0.287             0.194 
+sexuality_groups                  0.153             0.277
+lifestyle_groups                  0.375             0.223
+
 
 
 
