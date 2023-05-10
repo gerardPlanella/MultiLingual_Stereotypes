@@ -5,7 +5,9 @@ from enum import Enum
 from typing import List, Dict
 from snowballstemmer import stemmer
 
-
+from transformers import XLMRobertaForMaskedLM, XLMRobertaTokenizer, DataCollatorForLanguageModeling
+from transformers import Trainer, TrainingArguments
+from datasets import load_dataset
 
 class Language(Enum):
     English = "english"
@@ -109,6 +111,17 @@ class Stem_Language(Enum):
     Croatian = False
     Catalan = False
     Serbian = False
+
+def tokenize_function(examples):
+    tokenizer = XLMRobertaTokenizer.from_pretrained("xlm-roberta-base")
+    return tokenizer(examples["text"], return_special_tokens_mask=True)
+
+def preprocessing_fine_tuning(dataset_name, dataset_version, tokenizer):
+    print("Loading dataset.")
+    dataset = load_dataset(dataset_name, dataset_version)
+    tokenized_dataset = dataset.map(tokenize_function, batched=True, num_proc=4, remove_columns=["text"])
+    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=0.15)
+    return data_collator, tokenized_dataset
 
 if __name__ == "__main__":
     output_path = "data/emolex.json"
