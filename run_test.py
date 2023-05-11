@@ -197,15 +197,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
     parser.add_argument('--social_groups', nargs='+', default=['race'], help="Social Groups to Analyse.")
     parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
-    parser.add_argument('--language_2_path', type=str, default="social_groups/french_data.json", help="Language 2 to analyse.")
+    parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
     parser.add_argument('--output_dir', type=str, default="out/", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model Evaluated")
     parser.add_argument('--model_top_k', type=int, default=200, help="Top K results used for matrix generation.")
-    parser.add_argument('--lexicon_path_1', type=str, default="data/emolex_stemming_french.json", help="Path to Lexicon.")
-    parser.add_argument('--lexicon_path_2', type=str, default="data/emolex_no_stemming_french.json", help="Path to Lexicon.")
+    parser.add_argument('--lexicon_path', type=str, default="data/emolex_stemming_french.json", help="Path to Lexicon.")
     parser.add_argument('--verbose', action="store_true")
     parser.add_argument('--no_output_saving', action="store_false")
 
@@ -266,14 +265,14 @@ if __name__ == "__main__":
     
     matrix_1, df1 = emotion_per_groups(prompts_language_1, social_groups_language_1, args.language_1,
                                   model, model_attributes,stemming = args.stem_1, 
-                                  lex_path=args.lexicon_path_1, verbose=args.verbose)
+                                  lex_path=args.lexicon_path, verbose=args.verbose)
     
     if args.verbose:
         print("Computing Matrix 2")
     
     matrix_2, df2 = emotion_per_groups(prompts_language_2, social_groups_language_2, args.language_2,
                                   model, model_attributes,stemming = args.stem_2, 
-                                  lex_path=args.lexicon_path_2, verbose=args.verbose)
+                                  lex_path=args.lexicon_path, verbose=args.verbose)
 
 
     sim_matrix_1 = similarity_matrix(matrix_1)
