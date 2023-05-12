@@ -104,14 +104,14 @@ def load_lexicon(path, language_dict, output_path="data/emolex.json"):
 class Stem_Language(Enum):
     English = False
     Spanish = False
-    French = True
-    Greek = True
+    French = False
+    Greek = False
     Croatian = False
     Catalan = False
     Serbian = False
 
 if __name__ == "__main__":
-    output_path = "data/emolex.json"
+    output_path = "data/emolex_all_nostemmed.json"
     languages =  Language.to_dict()
     lexicon_path = "data/NRC-Emotion-Lexicon/NRC-Emotion-Lexicon-ForVariousLanguages.txt"
     load_lexicon(lexicon_path, languages, output_path=output_path)
