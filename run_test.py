@@ -289,8 +289,9 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
         emotions_extract_1[1].to_csv(f"{output_dir}/matrix_{language_1.name}_{stemming_l1}_{social_groups}.csv", index = False)
         emotions_extract_2[1].to_csv(f"{output_dir}/matrix_{language_2.name}_{stemming_l2}_{social_groups}.csv", index = False)
         
-        coeff_emotions.append(emotions_extract_1[0], emotions_extract_2[0])
-        coeff_emotions_RSA.append(similarity_matrix(emotions_extract_1[0]), similarity_matrix(emotions_extract_2[0]) )
+    
+        coeff_emotions.append(spearman_correlation(emotions_extract_1[0], emotions_extract_2[0]))
+        coeff_emotions_RSA.append(spearman_correlation(similarity_matrix(emotions_extract_1[0]), similarity_matrix(emotions_extract_2[0])))
 
     if verbose:
         print("Saving Data...")
@@ -309,19 +310,14 @@ if __name__ == "__main__":
     parser.add_argument('--social_groups', nargs='+', default=['age', 'lifestyle'], help="Social Groups to Analyse.")
     parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
->>>>>>> afa352a216284a0576ecf096a4ff5dfa6638beba
-    parser.add_argument('--output_dir', type=str, default="out/", help="Output directory for generated data.")
+    parser.add_argument('--output_dir', type=str, default="out/test", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model Evaluated")
-    parser.add_argument('--model_top_k', type=int, default=200, help="Top K results used for matrix generation.")
-<<<<<<< HEAD
+    parser.add_argument('--model_top_k', type=int, default=20, help="Top K results used for matrix generation.")
     parser.add_argument('--lexicon_path_1', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
     parser.add_argument('--lexicon_path_2', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
-=======
-    parser.add_argument('--lexicon_path', type=str, default="data/emolex_stemming_french.json", help="Path to Lexicon.")
->>>>>>> afa352a216284a0576ecf096a4ff5dfa6638beba
     parser.add_argument('--verbose', action="store_true")
     parser.add_argument('--no_output_saving', action="store_false")
 
@@ -355,7 +351,7 @@ if __name__ == "__main__":
     
     assert model_attributes is not None
 
-    run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path, args.verbose, args.output_dir)
+    run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
 
 
 
