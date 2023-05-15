@@ -27,6 +27,28 @@ def emotion_per_groups(prompts:dict, social_groups,
                        stemming = False, 
                        lex_path = "data/emolex.json", 
                        verbose = False):
+    """
+    Analyze the emotion content in a set of prompts for different social groups.
+
+    This function uses a language model to predict words that fill in the blanks in prompts. 
+    It then uses an emotion lexicon to determine the emotions associated with the predicted words.
+    It returns a matrix and a DataFrame representing the emotional content associated with each social group.
+
+    Parameters:
+    prompts (dict): A dictionary containing prompts. The key "general" should be present.
+    social_groups (list): A list of social groups to analyze.
+    language (Language): A Language enum representing the language of the prompts and social groups.
+    model_name (Models): A Models enum representing the language model to use for predictions.
+    model_attributes (dict): A dictionary of attributes to pass to the language model.
+    stemming (bool, optional): Whether to perform stemming on the predicted words. Default is False.
+    lex_path (str, optional): The path to the emotion lexicon. Default is "data/emolex.json".
+    verbose (bool, optional): Whether to print additional information during execution. Default is False.
+
+    Returns:
+    tuple: A tuple containing a numpy matrix and a pandas DataFrame. 
+           Each row corresponds to a social group, and each column corresponds to an emotion from the emotion lexicon. 
+           The values represent the emotional content associated with each social group.
+    """
     
     assert "general" in prompts
     
@@ -50,6 +72,8 @@ def emotion_per_groups(prompts:dict, social_groups,
     k = 0
     l = 0
     matrix_emotion = np.zeros((len(social_groups), len(emolex["sadly"])))
+    list_matrix_emotions = []
+    list_dataframes = []
     for i,group in tqdm(enumerate(social_groups)):
         if group in prompts: #Local prompts
             prompt_list = prompts[group]
@@ -71,6 +95,9 @@ def emotion_per_groups(prompts:dict, social_groups,
                     k += 1
                 else:
                     l += 1
+                # list_matrix_emotions.append(matrix_emotion[i])
+                # list_dataframes.append(pd.DataFrame(matrix_emotion[i], index=social_groups, columns=column_labels))
+
 
     if verbose:
         print(f"{l} words are not in the lexicon")
@@ -100,6 +127,22 @@ def load_social_group_file(path):
         return False, None
     
 def check_n_prompts_groups(data1, data2, local_prompts:bool):
+    """
+    Checks the consistency and structure of two datasets with respect to general and local prompts.
+    
+    This function checks whether both datasets contain "general_prompts" and each group key has the same number of items. 
+    It also verifies the existence and correct formatting of prompts.
+    If the local_prompts parameter is set to True, the function also checks for the existence and consistency of local prompts.
+    
+    Parameters:
+    data1 (dict): The first dataset to be checked. It's a dictionary where each key is a group and the values are items or prompts.
+    data2 (dict): The second dataset to be checked. It should have the same structure as data1.
+    local_prompts (bool): If set to True, the function checks for the presence and consistency of local prompts in both datasets.
+    
+    Returns:
+    bool: Returns True if both datasets pass all checks, False otherwise.
+    """
+    
     ok = True
     if "general_prompts" not in data1 or "general_prompts" not in data2:
         return False
@@ -170,7 +213,7 @@ def similarity_matrix(matrix):
     return similarity_matrix
 
 
-def extract_prompts_groups(data:dict, groups:list, local_prompts:bool):
+def extract_prompts_groups(data:dict, groups:list):
     prompts = {}
     items = []
 
@@ -182,7 +225,7 @@ def extract_prompts_groups(data:dict, groups:list, local_prompts:bool):
             prompts["general"] += data[key]
         else:
             if key in groups:
-                if local_prompts:
+                if data[key]["prompts"]!= []:
                     if key not in prompts:
                         prompts[key] = []
                     prompts[key] += data[key]["prompts"]
@@ -190,12 +233,80 @@ def extract_prompts_groups(data:dict, groups:list, local_prompts:bool):
                 
     return prompts, items
 
-                
+def run_all_groups(social_groups, language_1_path, language_2_path, model, model_attributes, stemming_l1, stemming_l2, lex_path, verbose, output_dir, use_local_prompts = True):
+
+    ok1, language_data_1 = load_social_group_file(language_1_path)
+    ok2, language_data_2 = load_social_group_file(language_2_path)
+
+    language_1 = os.path.basename(language_1_path).split("_")[0]
+    language_2 = os.path.basename(language_2_path).split("_")[0]
+
+    assert ok1 and ok2 
+
+    language_1 = Language(args.language_1)
+    language_2 = Language(args.language_2)
+
+    if verbose:
+        print("Checking File formats")
+
+    file_formats_ok = check_n_prompts_groups(language_data_1, language_data_2, use_local_prompts)
+
+    if verbose:
+        print("Extracting Social Group data")
+
+    prompts_language_1, social_groups_language_1 = extract_prompts_groups(language_data_1, social_groups)
+    prompts_language_2, social_groups_language_2 = extract_prompts_groups(language_data_2, social_groups)
+
+
+
+    list_matrix_l1 = []
+    list_df_l1 = []
+
+    list_matrix_l2 = []
+    list_df_l2 = []
+
+    coeff_emotions = []
+    coeff_emotions_RSA = []
+    if verbose:
+        print("Computing Matrices")
+
+    for i in tqdm(range(len(social_groups))):
+        emotions_extract_1 = emotion_per_groups(prompts_language_1, social_groups_language_1, language_1,
+                                  model, model_attributes, stemming_l1, 
+                                  lex_path, verbose)
+
+        emotions_extract_2 = emotion_per_groups(prompts_language_2, social_groups_language_2, language_2,
+                                  model, model_attributes, stemming_l2, 
+                                  lex_path, verbose)
+        
+
+        list_matrix_l1.append(emotions_extract_1[0])
+        list_df_l1.append(emotions_extract_1[1])
+
+        list_matrix_l2.append(emotions_extract_2[0])
+        list_df_l2.append(emotions_extract_2[1])
+
+        emotions_extract_1[1].to_csv(f"{output_dir}/matrix_{language_1.name}_{stemming_l1}_{social_groups}.csv", index = False)
+        emotions_extract_2[1].to_csv(f"{output_dir}/matrix_{language_2.name}_{stemming_l2}_{social_groups}.csv", index = False)
+        
+        coeff_emotions.append(emotions_extract_1[0], emotions_extract_2[0])
+        coeff_emotions_RSA.append(similarity_matrix(emotions_extract_1[0]), similarity_matrix(emotions_extract_2[0]) )
+
+    if verbose:
+        print("Saving Data...")
+
+    with open(output_dir + f"correlation_{language_1.name}_{language_2.name}_{social_groups}.pkl", 'wb') as f:
+        pickle.dump(coeff_emotions, f)
+    with open(output_dir + f"correlation_RSA_{language_1.name}_{language_2.name}_{social_groups}.pkl", 'wb') as f:
+        pickle.dump(coeff_emotions_RSA, f)
+    
+    if verbose:
+        print("Data Saved.")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
-    parser.add_argument('--social_groups', nargs='+', default=['race'], help="Social Groups to Analyse.")
+    parser.add_argument('--social_groups', nargs='+', default=['age', 'lifestyle'], help="Social Groups to Analyse.")
     parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
     parser.add_argument('--output_dir', type=str, default="out/", help="Output directory for generated data.")
@@ -238,79 +349,85 @@ if __name__ == "__main__":
     
     assert model_attributes is not None
 
-    if args.verbose:
-        print("Reading Social Group files")
-
-    ok1, language_data_1 = load_social_group_file(args.language_1_path)
-    ok2, language_data_2 = load_social_group_file(args.language_2_path)
-
-    assert ok1 and ok2 
-
-    if args.verbose:
-        print("Checking File formats")
-
-    file_formats_ok = check_n_prompts_groups(language_data_1, language_data_2, args.use_local_prompts)
+    run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path, args.verbose, args.output_dir)
 
 
-    assert file_formats_ok
 
-    if args.verbose:
-        print("Extracting Social Group data")
+    # if args.verbose:
+    #     print("Reading Social Group files")
 
-    prompts_language_1, social_groups_language_1 = extract_prompts_groups(language_data_1, args.social_groups, args.use_local_prompts)
-    prompts_language_2, social_groups_language_2 = extract_prompts_groups(language_data_2, args.social_groups, args.use_local_prompts)
+    # ok1, language_data_1 = load_social_group_file(args.language_1_path)
+    # ok2, language_data_2 = load_social_group_file(args.language_2_path)
 
-    if args.verbose:
-        print("Computing Matrix 1")
+    # assert ok1 and ok2 
+
+    # if args.verbose:
+    #     print("Checking File formats")
+
+    # file_formats_ok = check_n_prompts_groups(language_data_1, language_data_2, args.use_local_prompts)
+
+
+    # assert file_formats_ok
+
+    # if args.verbose:
+    #     print("Extracting Social Group data")
+
+    # prompts_language_1, social_groups_language_1 = extract_prompts_groups(language_data_1, args.social_groups, args.use_local_prompts)
+    # prompts_language_2, social_groups_language_2 = extract_prompts_groups(language_data_2, args.social_groups, args.use_local_prompts)
+
+    # if args.verbose:
+    #     print("Computing Matrix 1")
     
-    matrix_1, df1 = emotion_per_groups(prompts_language_1, social_groups_language_1, args.language_1,
-                                  model, model_attributes,stemming = args.stem_1, 
-                                  lex_path=args.lexicon_path, verbose=args.verbose)
+    # matrix_1, df1 = emotion_per_groups(prompts_language_1, social_groups_language_1, args.language_1,
+    #                               model, model_attributes,stemming = args.stem_1, 
+    #                               lex_path=args.lexicon_path, verbose=args.verbose)
     
-    if args.verbose:
-        print("Computing Matrix 2")
+    # if args.verbose:
+    #     print("Computing Matrix 2")
+
     
-    matrix_2, df2 = emotion_per_groups(prompts_language_2, social_groups_language_2, args.language_2,
-                                  model, model_attributes,stemming = args.stem_2, 
-                                  lex_path=args.lexicon_path, verbose=args.verbose)
+    
+    # matrix_2, df2 = emotion_per_groups(prompts_language_2, social_groups_language_2, args.language_2,
+    #                               model, model_attributes,stemming = args.stem_2, 
+    #                               lex_path=args.lexicon_path, verbose=args.verbose)
 
 
-    sim_matrix_1 = similarity_matrix(matrix_1)
-    sim_matrix_2 = similarity_matrix(matrix_2)
+    # sim_matrix_1 = similarity_matrix(matrix_1)
+    # sim_matrix_2 = similarity_matrix(matrix_2)
 
-    if args.verbose:
-        print("Computing Correlation")
+    # if args.verbose:
+    #     print("Computing Correlation")
 
-    coeffs_emotion = spearman_correlation(matrix_1, matrix_2)
-    coeffs_sim = spearman_correlation(sim_matrix_1, sim_matrix_2)
+    # coeffs_emotion = spearman_correlation(matrix_1, matrix_2)
+    # coeffs_sim = spearman_correlation(sim_matrix_1, sim_matrix_2)
 
-    if args.verbose:
-        print(f"----- Matrix for Language {args.language_1.name} --------")
-        print(df1)
-        print(f"\n\n\n----- Matrix for Language {args.language_2.name} --------")
-        print(df2)
-        print("\n\n\n------ Correlation Vector -------")
-        print(coeffs_emotion[0])
-        print("\n\n\n------ Mean of Correlation -------")
-        print(coeffs_emotion[1])
-        print("\n\n\n------ Correlation Vector RSA -------")
-        print(coeffs_sim[0])
-        print("\n\n\n------ Mean of Correlation RSA -------")
-        print(coeffs_sim[1])
+    # if args.verbose:
+    #     print(f"----- Matrix for Language {args.language_1.name} --------")
+    #     print(df1)
+    #     print(f"\n\n\n----- Matrix for Language {args.language_2.name} --------")
+    #     print(df2)
+    #     print("\n\n\n------ Correlation Vector -------")
+    #     print(coeffs_emotion[0])
+    #     print("\n\n\n------ Mean of Correlation -------")
+    #     print(coeffs_emotion[1])
+    #     print("\n\n\n------ Correlation Vector RSA -------")
+    #     print(coeffs_sim[0])
+    #     print("\n\n\n------ Mean of Correlation RSA -------")
+    #     print(coeffs_sim[1])
 
 
-    if not args.no_output_saving:
-        if args.verbose:
-            print("Saving Data...")
+    # if not args.no_output_saving:
+    #     if args.verbose:
+    #         print("Saving Data...")
 
-        df1.to_csv(f"{args.output_dir}/matrix_{args.language_1.name}_{args.stem_1}_{args.social_groups}.csv", index = False)
-        df2.to_csv(f"{args.output_dir}/matrix_{args.language_2.name}_{args.stem_2}_{args.social_groups}.csv", index = False)
-        with open(args.output_dir + f"correlation_{args.language_1.name}_{args.language_2.name}_{args.social_groups}.pkl", 'wb') as f:
-            pickle.dump(coeffs_emotion, f)
-        with open(args.output_dir + f"correlation_RSA_{args.language_1.name}_{args.language_2.name}_{args.social_groups}.pkl", 'wb') as f:
-            pickle.dump(coeffs_sim, f)
+    #     df1.to_csv(f"{args.output_dir}/matrix_{args.language_1.name}_{args.stem_1}_{args.social_groups}.csv", index = False)
+    #     df2.to_csv(f"{args.output_dir}/matrix_{args.language_2.name}_{args.stem_2}_{args.social_groups}.csv", index = False)
+    #     with open(args.output_dir + f"correlation_{args.language_1.name}_{args.language_2.name}_{args.social_groups}.pkl", 'wb') as f:
+    #         pickle.dump(coeffs_emotion, f)
+    #     with open(args.output_dir + f"correlation_RSA_{args.language_1.name}_{args.language_2.name}_{args.social_groups}.pkl", 'wb') as f:
+    #         pickle.dump(coeffs_sim, f)
         
-        if args.verbose:
-            print("Data Saved.")
+    #     if args.verbose:
+    #         print("Data Saved.")
     
     
