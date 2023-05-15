@@ -297,10 +297,10 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
     if verbose:
         print("Saving Data...")
 
-    with open(output_dir + f"/correlation_{language_1.name}_{language_2.name}_{social_groups}.pkl", 'wb') as f:
-        pickle.dump(coeff_emotions, f)
-    with open(output_dir + f"/correlation_RSA_{language_1.name}_{language_2.name}_{social_groups}.pkl", 'wb') as f:
-        pickle.dump(coeff_emotions_RSA, f)
+    with open(output_dir + f"/correlation_{language_1.name}_{language_2.name}_{social_groups}.json", 'w') as f:
+        json.dump(coeff_emotions, f)
+    with open(output_dir + f"/correlation_RSA_{language_1.name}_{language_2.name}_{social_groups}.json", 'w') as f:
+        json.dump(coeff_emotions_RSA, f)
     
     if verbose:
         print("Data Saved.")
