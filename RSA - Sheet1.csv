@@ -1,0 +1,11 @@
+language1,language2,ages_groups,gender_groups,race_groups,profession_groups,religious_groups,political_groups,sexuality_groups,lifestyle_groups
+French,English,0.685,0.255,0.415,0.245,0.384,0.682,0.426,0.626
+Croatian,English,0.400,0.213,0.197,0.338,0.298,0.638,0.259,0.145
+Croatian,French,0.255,0.204,0.197,0.193,0.368,0.529,0.370,0.203
+Croatian,Greek,0.477,0.071,0.123,0.108,0.376,0.194,0.277,0.223
+English,Greek,0.317,0.190,0.209,0.100,0.196,0.272,0.292,0.296
+English,Spanish,0.231,0.142,0.297,0.217,0.335,0.562,0.312,0.419
+French,Greek,0.194,0.163,0.246,0.107,0.198,0.289,0.223,0.360
+French,Spanish,0.218,0.240,0.400,0.247,0.396,0.356,0.420,0.333
+Greek,Spanish,0.288,0.112,0.204,0.133,0.403,0.245,0.345,0.239
+Croatian,Spanish,0.344,0.248,0.132,0.204,0.418,0.378,0.589,0.274

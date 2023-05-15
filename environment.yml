@@ -1,4 +1,4 @@
-name: multilingual
+name: multilingual-env
 channels:
   - anaconda
   - conda-forge
@@ -38,7 +38,6 @@ dependencies:
   - gflags=2.2.2
   - glog=0.5.0
   - huggingface_hub=0.14.1
-  - icc_rt=2022.1.0
   - idna=3.4
   - importlib-metadata=6.6.0
   - importlib_metadata=6.6.0
@@ -102,8 +101,6 @@ dependencies:
   - tzdata=2022a
   - urllib3=1.26.14
   - utf8proc=2.6.1
-  - vc=14.2
-  - vs2015_runtime=14.27.29016
   - wheel=0.37.1
   - win_inet_pton=1.1.0
   - wincertstore=0.2
