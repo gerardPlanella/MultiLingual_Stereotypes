@@ -287,8 +287,8 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
         list_matrix_l2.append(emotions_extract_2[0])
         list_df_l2.append(emotions_extract_2[1])
 
-        emotions_extract_1[1].to_csv(f"{output_dir}/matrix_{language_1.name}_{stemming_l1}_{social_groups}.csv", index = False)
-        emotions_extract_2[1].to_csv(f"{output_dir}/matrix_{language_2.name}_{stemming_l2}_{social_groups}.csv", index = False)
+        emotions_extract_1[1].to_csv(f"{output_dir}/matrix_{language_1.name}_{stemming_l1}_{social_groups[i]}.csv", index = False)
+        emotions_extract_2[1].to_csv(f"{output_dir}/matrix_{language_2.name}_{stemming_l2}_{social_groups[i]}.csv", index = False)
         
     
         coeff_emotions.append(spearman_correlation(emotions_extract_1[0], emotions_extract_2[0]))
