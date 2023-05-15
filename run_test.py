@@ -215,7 +215,7 @@ def similarity_matrix(matrix):
 
 def extract_prompts_groups(data:dict, groups:list):
     prompts = {}
-    items = []
+    items = {}
 
 
     for key in data:
@@ -229,7 +229,8 @@ def extract_prompts_groups(data:dict, groups:list):
                     if key not in prompts:
                         prompts[key] = []
                     prompts[key] += data[key]["prompts"]
-                items += data[key]["items"]
+                items[key] = []
+                items[key] += data[key]["items"]
                 
     return prompts, items
 
@@ -271,11 +272,11 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
         print("Computing Matrices")
 
     for i in tqdm(range(len(social_groups))):
-        emotions_extract_1 = emotion_per_groups(prompts_language_1, social_groups_language_1, language_1,
+        emotions_extract_1 = emotion_per_groups(prompts_language_1, social_groups_language_1[social_groups[i]], language_1,
                                   model, model_attributes, stemming_l1, 
                                   lex_path, verbose)
 
-        emotions_extract_2 = emotion_per_groups(prompts_language_2, social_groups_language_2, language_2,
+        emotions_extract_2 = emotion_per_groups(prompts_language_2, social_groups_language_2[social_groups[i]], language_2,
                                   model, model_attributes, stemming_l2, 
                                   lex_path, verbose)
         
