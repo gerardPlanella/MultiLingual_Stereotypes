@@ -173,25 +173,25 @@ Results of Greek vs Spanish:
                     Spearman Correlation    Spearman Correlation RSA
 ages_groups                 0.438                0.288
 gender_groups                0.342                0.112 
-race_groups                                  
-profession_groups                            
-religious_groups                           
-political_groups                        
-sexuality_groups                         
-lifestyle_groups                         
+race_groups                  0.166                0.204
+profession_groups             0.211               0.133
+religious_groups               0.123            0.403
+political_groups               0.286         0.245
+sexuality_groups               0.236          0.345
+lifestyle_groups                0.257         0.239
 
 
 
 Results of Croatian vs Spanish: 
                     Spearman Correlation    Spearman Correlation RSA
-ages_groups                                 
-gender_groups                                 
-race_groups                                  
-profession_groups                            
-religious_groups                           
-political_groups                        
-sexuality_groups                         
-lifestyle_groups                         
+ages_groups                  0.719              0.344
+gender_groups                0.735              0.248  
+race_groups                  0.696              0.132
+profession_groups            0.717              0.204
+religious_groups             0.751              0.418
+political_groups             0.783              0.378
+sexuality_groups             0.770              0.589
+lifestyle_groups             0.617              0.274
 
 
 

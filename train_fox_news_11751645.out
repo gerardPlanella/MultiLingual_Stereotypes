@@ -1,0 +1,5 @@
+  File "/home/lcur1144/MultiLingual_Stereotypes/train.py", line 3
+    <<<<<<< HEAD
+    ^^
+SyntaxError: invalid syntax
+srun: error: r29n3: task 0: Exited with exit code 1
