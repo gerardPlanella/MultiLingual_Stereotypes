@@ -20,8 +20,13 @@ def load_model(model:Models, model_attributes:dict = {}, pre_trained = False):
 
         if pre_trained == True:
             model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-base")
+            # model = XLMRobertaForMaskedLM.from_pretrained("./checkpoint-10625")
             return model
-        model = pipeline(model_attributes["pipeline"], model=model.value, top_k=model_attributes["top_k"])
+        model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-base")
+        # model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-finetuned/fox_news/checkpoint-500/")
+        # model = pipeline(model_attributes["pipeline"], model=model.value, top_k=model_attributes["top_k"])
+        model = pipeline(model_attributes["pipeline"], model = model, tokenizer=XLMRobertaTokenizer.from_pretrained("xlm-roberta-base"), top_k=model_attributes["top_k"])
+         
     else:
         raise Exception(f"Model {model.value} not implemented.")
     return model
