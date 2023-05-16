@@ -75,6 +75,7 @@ def emotion_per_groups(prompts:dict, social_groups,
     list_matrix_emotions = []
     list_dataframes = []
     for i,group in tqdm(enumerate(social_groups)):
+        n_found_in_group = 0
         if group in prompts: #Local prompts
             prompt_list = prompts[group]
         else:
@@ -93,10 +94,13 @@ def emotion_per_groups(prompts:dict, social_groups,
                 if word_pred in emolex:
                     matrix_emotion[i] += emolex[word_pred]
                     k += 1
+                    n_found_in_group += 1
                 else:
                     l += 1
                 # list_matrix_emotions.append(matrix_emotion[i])
                 # list_dataframes.append(pd.DataFrame(matrix_emotion[i], index=social_groups, columns=column_labels))
+        
+        matrix_emotion[i] /= n_found_in_group
 
 
     if verbose:
@@ -305,22 +309,52 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
     if verbose:
         print("Data Saved.")
 
+def run_emotion_profile(social_group, language_1_path, model, model_attributes, lex_path, verbose, output_dir, use_local_prompts = True):
+
+    ok1, language_data_1 = load_social_group_file(language_1_path)
+
+    language_1 = os.path.basename(language_1_path).split("_")[0]
+
+    assert ok1
+
+    language_1 = Language(args.language_1)
+
+    if verbose:
+        print("Checking File formats")
+
+    if verbose:
+        print("Extracting Social Group data")
+
+    prompts_language_1, social_groups_language_1 = extract_prompts_groups(language_data_1, social_group)
+    emotions_extract_1 = emotion_per_groups(prompts_language_1, social_groups_language_1[social_group], language_1,
+                                  model, model_attributes, False, 
+                                  lex_path, verbose)
+    
+    emotions_extract_1[1].to_csv(f"{output_dir}/matrix_{language_1.name}_{social_group}.csv", index = True)
+
+def calculate_average_emotions(df):
+    # Exclude the first column (row labels) from the mean calculation
+    emotions_columns = df.columns[1:]  # Exclude the first column
+    average_emotions = df[emotions_columns].mean()
+
+    return average_emotions
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
-    parser.add_argument('--social_groups', nargs='+', default=['age', 'lifestyle'], help="Social Groups to Analyse.")
-    parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
+    parser.add_argument('--social_groups', nargs='+', default="racial_minorities", help="Social Groups to Analyse.")
+    parser.add_argument('--language_1_path', type=str, default="social_groups/english_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
-    parser.add_argument('--output_dir', type=str, default="out/test", help="Output directory for generated data.")
+    parser.add_argument('--output_dir', type=str, default="out/pretrained/emotion_profile", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model Evaluated")
-    parser.add_argument('--model_top_k', type=int, default=20, help="Top K results used for matrix generation.")
+    parser.add_argument('--model_top_k', type=int, default=200, help="Top K results used for matrix generation.")
     parser.add_argument('--lexicon_path_1', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
     parser.add_argument('--lexicon_path_2', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
     parser.add_argument('--verbose', action="store_true")
-    parser.add_argument('--no_output_saving', action="store_false")
+    parser.add_argument('--no_output_saving', action="store_true")
 
     args = parser.parse_args()
 
@@ -352,10 +386,13 @@ if __name__ == "__main__":
     
     assert model_attributes is not None
 
-    run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
+    # run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
+    # run_emotion_profile(args.social_groups, args.language_1_path, model, model_attributes, args.lexicon_path_1, args.verbose, args.output_dir)
+    df_pretrained = pd.read_csv("out/pretrained/emotion_profile/matrix_English_racial_minorities.csv")
+    df_fine_tuned = pd.read_csv("out/fine_tuned/emotion_profile/matrix_English_racial_minorities.csv")
 
-
-
+    print(calculate_average_emotions(df_pretrained))
+    print(calculate_average_emotions(df_fine_tuned))
     # if args.verbose:
     #     print("Reading Social Group files")
 
