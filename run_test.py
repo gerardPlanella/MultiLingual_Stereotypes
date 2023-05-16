@@ -287,8 +287,8 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
         list_matrix_l2.append(emotions_extract_2[0])
         list_df_l2.append(emotions_extract_2[1])
 
-        emotions_extract_1[1].to_csv(f"{output_dir}/matrix_{language_1.name}_{stemming_l1}_{social_groups[i]}.csv", index = False)
-        emotions_extract_2[1].to_csv(f"{output_dir}/matrix_{language_2.name}_{stemming_l2}_{social_groups[i]}.csv", index = False)
+        emotions_extract_1[1].to_csv(f"{output_dir}/matrix_{language_1.name}_{stemming_l1}_{social_groups[i]}.csv", index = True)
+        emotions_extract_2[1].to_csv(f"{output_dir}/matrix_{language_2.name}_{stemming_l2}_{social_groups[i]}.csv", index = True)
         
     
         coeff_emotions.append(spearman_correlation(emotions_extract_1[0], emotions_extract_2[0]))
@@ -308,15 +308,15 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
-    parser.add_argument('--social_groups', nargs='+', default=['age', 'lifestyle'], help="Social Groups to Analyse.")
+    parser.add_argument('--social_groups', nargs='+', default=social_groups, help="Social Groups to Analyse.")
     parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
-    parser.add_argument('--output_dir', type=str, default="out/test", help="Output directory for generated data.")
+    parser.add_argument('--output_dir', type=str, default="out/pretrained", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model Evaluated")
-    parser.add_argument('--model_top_k', type=int, default=20, help="Top K results used for matrix generation.")
+    parser.add_argument('--model_top_k', type=int, default=200, help="Top K results used for matrix generation.")
     parser.add_argument('--lexicon_path_1', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
     parser.add_argument('--lexicon_path_2', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
     parser.add_argument('--verbose', action="store_true")
