@@ -75,6 +75,7 @@ def emotion_per_groups(prompts:dict, social_groups,
     list_matrix_emotions = []
     list_dataframes = []
     for i,group in tqdm(enumerate(social_groups)):
+        n_found_in_group = 0
         if group in prompts: #Local prompts
             prompt_list = prompts[group]
         else:
@@ -93,10 +94,13 @@ def emotion_per_groups(prompts:dict, social_groups,
                 if word_pred in emolex:
                     matrix_emotion[i] += emolex[word_pred]
                     k += 1
+                    n_found_in_group += 1
                 else:
                     l += 1
                 # list_matrix_emotions.append(matrix_emotion[i])
                 # list_dataframes.append(pd.DataFrame(matrix_emotion[i], index=social_groups, columns=column_labels))
+        
+        matrix_emotion[i] /= n_found_in_group
 
 
     if verbose:
