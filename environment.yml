@@ -113,4 +113,5 @@ dependencies:
   - zstd=1.5.5
   - pip:
     - google-cloud-translate==2.0.1
+    -sentencepiece==0.1.99
 prefix: C:\Users\rober\anaconda3\envs\multilingual

@@ -256,6 +256,8 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
 
     file_formats_ok = check_n_prompts_groups(language_data_1, language_data_2, use_local_prompts)
 
+    assert file_formats_ok
+
     if verbose:
         print("Extracting Social Group data")
 
@@ -388,11 +390,7 @@ if __name__ == "__main__":
 
     # run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
     # run_emotion_profile(args.social_groups, args.language_1_path, model, model_attributes, args.lexicon_path_1, args.verbose, args.output_dir)
-    df_pretrained = pd.read_csv("out/pretrained/emotion_profile/matrix_English_racial_minorities.csv")
-    df_fine_tuned = pd.read_csv("out/fine_tuned/emotion_profile/matrix_English_racial_minorities.csv")
 
-    print(calculate_average_emotions(df_pretrained))
-    print(calculate_average_emotions(df_fine_tuned))
     # if args.verbose:
     #     print("Reading Social Group files")
 
