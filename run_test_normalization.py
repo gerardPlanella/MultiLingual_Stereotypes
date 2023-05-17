@@ -15,7 +15,8 @@ from snowballstemmer import stemmer
 from sklearn.metrics.pairwise import cosine_similarity
 from transformers import XLMRobertaTokenizer
 import torch 
-
+from langdetect import detect
+from langdetect.lang_detect_exception import LangDetectException
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
@@ -99,10 +100,27 @@ def emotion_per_groups(prompts:dict, social_groups,
             # Get the scores for all words in the vocabulary
             all_scores = token_probs[0].tolist()
 
-            results = [i / j for i, j in zip(all_scores, priors[prompt])]
-            
-            top_200_indices = np.argsort(results)[::-1][:200]
-            top_200_words = [tokenizer.decode(i) for i in top_200_indices]
+            results_log = [np.log(i) - np.log(j) for i, j in zip(all_scores, priors[prompt])]
+            top_200_indices_log = np.argsort(results_log)[::-1]
+            top_200_words_log = [tokenizer.decode(i) for i in top_200_indices_log]
+
+            results_division = [i/j for i, j in zip(all_scores, priors[prompt])]
+            top_200_indices_div = np.argsort(results_division)[::-1]
+            top_200_words_div = [tokenizer.decode(i) for i in top_200_indices_div]
+
+            results_division_square = [i/np.sqrt(j) for i, j in zip(all_scores, priors[prompt])]
+            top_200_indices_div_square = np.argsort(results_division_square)[::-1]
+            top_200_words_div_square = [tokenizer.decode(i) for i in top_200_indices_div_square]
+
+            # top_200_english_words = []
+            # g = 0
+            # while len(top_200_english_words)<200:
+            #     try:
+            #         if detect(tokenizer.decode(top_200_indices[g])) == 'en':
+            #             top_200_english_words.append(tokenizer.decode(top_200_indices[g]))
+            #     except LangDetectException:
+            #         pass
+            #     g += 1
 
             for word in top_200_words:
                 if word in emolex:
@@ -325,7 +343,7 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
     parser.add_argument('--social_groups', nargs='+', default=['age', 'lifestyle'], help="Social Groups to Analyse.")
-    parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
+    parser.add_argument('--language_1_path', type=str, default="social_groups/english_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
     parser.add_argument('--output_dir', type=str, default="out/test", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
