@@ -124,9 +124,11 @@ def emotion_per_groups(prompts:dict, social_groups,
                 try:
                     if detect(tokenizer.decode(top_300_indices[g])) == 'fr':
                         top_300_english_words.append(tokenizer.decode(top_300_indices[g]))
+                    g += 1
                 except LangDetectException:
+                    g += 1
                     pass
-                g += 1
+
 
             for word in top_300_words:
                 if word in emolex:
