@@ -13,20 +13,24 @@ import os
 import pickle
 from snowballstemmer import stemmer
 from sklearn.metrics.pairwise import cosine_similarity
-from transformers import XLMRobertaTokenizer
+from transformers import XLMRobertaTokenizer, BertTokenizer
 import torch 
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
+from nltk.corpus import words
+
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
+nltk.download('words')
 
 social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle"]
 
 def emotion_per_groups(prompts:dict, social_groups, 
                        language:Language, model_name:Models, 
-                       model_attributes:dict, 
+                       model_attributes:dict,
+                       top_k:int, 
                        stemming = False, 
                        lex_path = "data/emolex.json", 
                        verbose = False):
@@ -68,6 +72,7 @@ def emotion_per_groups(prompts:dict, social_groups,
     #Load the LM 
     model = load_model(model_name, model_attributes, True)
     tokenizer = XLMRobertaTokenizer.from_pretrained('xlm-roberta-base')
+    # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
     #load the priors 
     with open(f'social_groups/prior_probs/{language.name.lower()}_priors.json') as file:
@@ -100,29 +105,30 @@ def emotion_per_groups(prompts:dict, social_groups,
             # Get the scores for all words in the vocabulary
             all_scores = token_probs[0].tolist()
 
-            results_log = [np.log(i) - np.log(j) for i, j in zip(all_scores, priors[prompt])]
-            top_200_indices_log = np.argsort(results_log)[::-1]
-            top_200_words_log = [tokenizer.decode(i) for i in top_200_indices_log]
+            results = [np.log(i) - np.log(j) for i, j in zip(all_scores, priors[prompt])]
+            top_300_indices = np.argsort(results)[::-1]
+            top_300_words = [tokenizer.decode(i) for i in top_300_indices]
+            # english_words = select_english_words(top_300_words, 300)
+            # results_division = [i/j for i, j in zip(all_scores, priors[prompt])]
+            # top_200_indices_div = np.argsort(results_division)[::-1]
+            # top_200_words_div = [tokenizer.decode(i) for i in top_200_indices_div]
 
-            results_division = [i/j for i, j in zip(all_scores, priors[prompt])]
-            top_200_indices_div = np.argsort(results_division)[::-1]
-            top_200_words_div = [tokenizer.decode(i) for i in top_200_indices_div]
-
-            results_division_square = [i/np.sqrt(j) for i, j in zip(all_scores, priors[prompt])]
-            top_200_indices_div_square = np.argsort(results_division_square)[::-1]
-            top_200_words_div_square = [tokenizer.decode(i) for i in top_200_indices_div_square]
+            # results_division_square = [i/np.sqrt(j) for i, j in zip(all_scores, priors[prompt])]
+            # top_200_indices_div_square = np.argsort(results_division_square)[::-1]
+            # top_200_words_div_square = [tokenizer.decode(i) for i in top_200_indices_div_square]
 
             # top_200_english_words = []
-            # g = 0
-            # while len(top_200_english_words)<200:
-            #     try:
-            #         if detect(tokenizer.decode(top_200_indices[g])) == 'en':
-            #             top_200_english_words.append(tokenizer.decode(top_200_indices[g]))
-            #     except LangDetectException:
-            #         pass
-            #     g += 1
+            g = 0
+            top_300_english_words = []
+            while len(top_300_english_words)<200:
+                try:
+                    if detect(tokenizer.decode(top_300_indices[g])) == 'fr':
+                        top_300_english_words.append(tokenizer.decode(top_300_indices[g]))
+                except LangDetectException:
+                    pass
+                g += 1
 
-            for word in top_200_words:
+            for word in top_300_words:
                 if word in emolex:
                     matrix_emotion[i] += emolex[word]
                     k += 1
@@ -142,6 +148,18 @@ def emotion_per_groups(prompts:dict, social_groups,
     if verbose:
         print(df)
     return matrix_emotion, df
+
+def select_english_words(word_list, k):
+    english_words_set = set(words.words()) # Convert to set for faster lookup
+    english_words = []
+
+    for word in word_list:
+        if word.lower() in english_words_set:
+            english_words.append(word)
+            if len(english_words) == k:
+                break
+
+    return english_words
 
 def spearman_correlation(matrix_1:pd.DataFrame, matrix_2:pd.DataFrame):
     list_correlation = []
@@ -313,7 +331,7 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
         emotions_extract_2 = emotion_per_groups(prompts_language_2, social_groups_language_2[social_groups[i]], language_2,
                                   model, model_attributes, stemming_l2, 
                                   lex_path, verbose)
-        
+        emotion_per_groups()
 
         list_matrix_l1.append(emotions_extract_1[0])
         list_df_l1.append(emotions_extract_1[1])
@@ -343,7 +361,7 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
     parser.add_argument('--social_groups', nargs='+', default=['age', 'lifestyle'], help="Social Groups to Analyse.")
-    parser.add_argument('--language_1_path', type=str, default="social_groups/english_data.json", help="Language 1 to analyse.")
+    parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
     parser.add_argument('--output_dir', type=str, default="out/test", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
@@ -379,6 +397,12 @@ if __name__ == "__main__":
     model_attributes = None
 
     if model == Models.XLMR:
+        model_attributes = {
+            "pipeline":"fill-mask",
+            "top_k":args.model_top_k
+        }
+
+    if model == Models.BERT:
         model_attributes = {
             "pipeline":"fill-mask",
             "top_k":args.model_top_k
