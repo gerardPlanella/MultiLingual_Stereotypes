@@ -69,7 +69,8 @@ def emotion_per_groups(prompts:dict, social_groups,
     tokenizer = XLMRobertaTokenizer.from_pretrained('xlm-roberta-base')
 
     #load the priors 
-    priors = {}
+    with open(f'social_groups/prior_probs/{language.name.lower()}_priors.json') as file:
+        priors = json.load(file)
     #load emotion lexicon dictionnary
     with open(lex_path, "r", encoding="utf-8") as f:
         emolex = json.load(f)
@@ -87,9 +88,10 @@ def emotion_per_groups(prompts:dict, social_groups,
             prompt_list = prompts["general"]
 
         for j, prompt in enumerate(prompt_list):
-            input_ids = tokenizer.encode(prompt.format(group), return_tensor='pt')
+            input_ids = tokenizer.encode(prompt.format(group), return_tensors='pt')
             # Get the position of the masked token
             mask_token_index = torch.where(input_ids == tokenizer.mask_token_id)[1]
+            # mask_token_index = input_ids.index(tokenizer.mask_token_id)
             # Forward pass through the model
             outputs = model(input_ids)
             # Get the token probabilities, token_probs of size [1, 250002]
@@ -97,7 +99,7 @@ def emotion_per_groups(prompts:dict, social_groups,
             # Get the scores for all words in the vocabulary
             all_scores = token_probs[0].tolist()
 
-            results = [i / j for i, j in zip(all_scores, priors[prompt.format(group)])]
+            results = [i / j for i, j in zip(all_scores, priors[prompt])]
             
             top_200_indices = np.argsort(results)[::-1][:200]
             top_200_words = [tokenizer.decode(i) for i in top_200_indices]
