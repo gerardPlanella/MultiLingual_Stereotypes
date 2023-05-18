@@ -5,7 +5,8 @@ import json
 import os
 from run_test import load_social_group_file, extract_prompts_groups
 from collections import defaultdict
-
+from langdetect import detect
+from langdetect.lang_detect_exception import LangDetectException
 
 def create_score_list(data, word_list, model):
 
@@ -28,12 +29,32 @@ def create_score_list(data, word_list, model):
     print(f'The words retrieved in the text file are {words_not_in_file}')
     return score_list
 
+def create_score_list_for_greek(data, model):
+
+    max_token = max(item['token'] for item in data)
+    score_list = [None] * (max_token + 1)
+    greek_words = 0 
+    for item in data:
+        token_id = item['token']
+        score = item['score']
+        token = model.tokenizer.decode(token_id)
+        try:
+            if detect(token) == 'el':
+                score_list[token_id] = score
+                greek_words += 1
+            else:
+                score_list[token_id] = 100
+        except LangDetectException:
+            pass
+    print(f'The number of greek words is {greek_words}')
+    return score_list
+
 
 social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle"]
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Prior probability creation.')
-    parser.add_argument('--language_path', type=str, default="social_groups/spanish_data.json", help="Language to analyse.")
+    parser.add_argument('--language_path', type=str, default="social_groups/greek_data.json", help="Language to analyse.")
     parser.add_argument('--output_dir', type=str, default="./prior_probs", help="Output directory for generated data.")
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model Evaluated")
     parser.add_argument('--model_top_k', type=int, default=250002, help="Top K results used for matrix generation, set this to the vocabulary size.")
@@ -113,7 +134,10 @@ if __name__ == "__main__":
         prompt_masked = prompt.replace("{}", "<mask>")
         out = unmasker(prompt_masked)[1]
 
-        priors[prompt] = create_score_list(out, words_in_file, unmasker)
+        if args.language == Language.Greek:
+            priors[prompt] = create_score_list_for_greek(out, unmasker)
+        else:
+            priors[prompt] = create_score_list(out, words_in_file, unmasker)
 
     if verbose:
         print("Saving to " + out_path)
