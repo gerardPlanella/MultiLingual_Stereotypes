@@ -20,7 +20,7 @@
     },
     "countries":{
         "prompts": ["Why is {} so <mask> ?",
-        "What makes {} so <mask>?",
+        "What make {} so <mask>?",
         "How come {} is so <mask>?",
         "Why is {} always so <mask>?",
         "Why are all people in {} so <mask>?"],

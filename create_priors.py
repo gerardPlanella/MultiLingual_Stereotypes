@@ -1,8 +1,11 @@
 from model import load_model, Models
 from data import Language
+
 import argparse
 import json
 import os
+import numpy as np
+
 from run_test import load_social_group_file, extract_prompts_groups
 from collections import defaultdict
 from langdetect import detect
@@ -20,13 +23,19 @@ def create_score_list(data, word_list, model):
         token = model.tokenizer.decode(token_id)
         if token in word_list:
             score_list[token_id] = score
-            words_counted_in_file += 1
         else:
             score_list[token_id] = 100
-            words_not_in_file += 1
 
-    print(f'The words retrieved in the text file are {words_counted_in_file}')
-    print(f'The words retrieved in the text file are {words_not_in_file}')
+    not_100_values = np.array([value for value in score_list if value != 100])
+    normalized_values = not_100_values / not_100_values.sum()
+
+    j = 0
+    for i in range(len(score_list)):
+        if score_list[i] != 100:
+            score_list[i] = normalized_values[j]
+            j += 1
+
+
     return score_list
 
 def create_score_list_for_greek(data, model):
@@ -54,7 +63,7 @@ social_groups = ["religion", "age", "gender", "countries", "race", "profession",
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Prior probability creation.')
-    parser.add_argument('--language_path', type=str, default="social_groups/greek_data.json", help="Language to analyse.")
+    parser.add_argument('--language_path', type=str, default="social_groups/french_data.json", help="Language to analyse.")
     parser.add_argument('--output_dir', type=str, default="./prior_probs", help="Output directory for generated data.")
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model Evaluated")
     parser.add_argument('--model_top_k', type=int, default=250002, help="Top K results used for matrix generation, set this to the vocabulary size.")

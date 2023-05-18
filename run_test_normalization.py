@@ -5,12 +5,14 @@ from tqdm import tqdm
 import pandas as pd
 from scipy.stats import spearmanr
 from data import Language, Emotions
-from nltk.stem.snowball import SnowballStemmer
+
 import argparse
 import nltk
 import json
 import os
 import pickle
+
+from nltk.stem.snowball import SnowballStemmer
 from snowballstemmer import stemmer
 from sklearn.metrics.pairwise import cosine_similarity
 from transformers import XLMRobertaTokenizer, BertTokenizer
@@ -32,7 +34,7 @@ def emotion_per_groups(prompts:dict, social_groups,
                        model_attributes:dict,
                        top_k:int, 
                        stemming = False, 
-                       lex_path = "data/emolex.json", 
+                       lex_path = "data/emolex_all_nostemmed.json", 
                        verbose = False):
     """
     Analyze the emotion content in a set of prompts for different social groups.
@@ -75,12 +77,15 @@ def emotion_per_groups(prompts:dict, social_groups,
     # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
     #load the priors 
-    with open(f'social_groups/prior_probs/{language.name.lower()}_priors.json') as file:
+    with open(f'prior_probs/{language.name.lower()}_priors.json') as file:
         priors = json.load(file)
     #load emotion lexicon dictionnary
+    # with open(lex_path, "r", encoding="utf-8") as f:
+    print("opening emolex")
     with open(lex_path, "r", encoding="utf-8") as f:
         emolex = json.load(f)
-    
+
+    print("emolex opened")
     k = 0
     l = 0
     matrix_emotion = np.zeros((len(social_groups), len(emolex["sadly"])))
@@ -106,40 +111,48 @@ def emotion_per_groups(prompts:dict, social_groups,
             all_scores = token_probs[0].tolist()
 
             results = [np.log(i) - np.log(j) for i, j in zip(all_scores, priors[prompt])]
-            top_300_indices = np.argsort(results)[::-1]
+            top_300_indices = np.argsort(results)[::-1][0:300]
             top_300_words = [tokenizer.decode(i) for i in top_300_indices]
-            # english_words = select_english_words(top_300_words, 300)
+
+            # if language.value == 'english':
+            #     top_300_words_en = select_english_words(top_300_words, 300)
+
+            # top_300_english_words = []
+
+            # for word in top_300_words:
+            #     try:
+            #         if detect(word) == 'hr':
+            #             top_300_words.append(word)
+            #     except LangDetectException:
+            #         pass
+            #     if len(top_300_words) > 300:
+            #         break
+            # while len(top_300_english_words)<2:
+            #     try:
+            #         if detect(top_300_words[g]) == 'fr':
+            #             top_300_english_words.append(tokenizer.decode(top_300_indices[g]))
+            #         g += 1
+            #     except LangDetectException:
+            #         g += 1
+            #         pass
             # results_division = [i/j for i, j in zip(all_scores, priors[prompt])]
             # top_200_indices_div = np.argsort(results_division)[::-1]
             # top_200_words_div = [tokenizer.decode(i) for i in top_200_indices_div]
 
             # results_division_square = [i/np.sqrt(j) for i, j in zip(all_scores, priors[prompt])]
             # top_200_indices_div_square = np.argsort(results_division_square)[::-1]
-            # top_200_words_div_square = [tokenizer.decode(i) for i in top_200_indices_div_square]
-
-            # top_200_english_words = []
-            g = 0
-            top_300_english_words = []
-            while len(top_300_english_words)<200:
-                try:
-                    if detect(tokenizer.decode(top_300_indices[g])) == 'fr':
-                        top_300_english_words.append(tokenizer.decode(top_300_indices[g]))
-                    g += 1
-                except LangDetectException:
-                    g += 1
-                    pass
-
+            # top_200_words_div_square = [tokenizer.decode(i) for i in top_200_indices_div_square
 
             for word in top_300_words:
                 if word in emolex:
                     matrix_emotion[i] += emolex[word]
                     k += 1
-                    n_found_in_group = 0
+                    n_found_in_group +=1 
                 else:
                     l += 1
                 # list_matrix_emotions.append(matrix_emotion[i])
                 # list_dataframes.append(pd.DataFrame(matrix_emotion[i], index=social_groups, columns=column_labels))
-        matrix_emotion[i] /= n_found_in_group
+        matrix_emotion[i] = matrix_emotion[i]/n_found_in_group
 
     if verbose:
         print(f"{l} words are not in the lexicon")
@@ -327,11 +340,11 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
 
     for i in tqdm(range(len(social_groups))):
         emotions_extract_1 = emotion_per_groups(prompts_language_1, social_groups_language_1[social_groups[i]], language_1,
-                                  model, model_attributes, stemming_l1, 
+                                  model, model_attributes, 300, stemming_l1, 
                                   lex_path, verbose)
 
         emotions_extract_2 = emotion_per_groups(prompts_language_2, social_groups_language_2[social_groups[i]], language_2,
-                                  model, model_attributes, stemming_l2, 
+                                  model, model_attributes, 300, stemming_l2, 
                                   lex_path, verbose)
         emotion_per_groups()
 
@@ -359,13 +372,35 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
     if verbose:
         print("Data Saved.")
 
+def run_emotion_profile(social_group, language_1_path, model, model_attributes, lex_path, verbose, output_dir, use_local_prompts = True):
+
+    ok1, language_data_1 = load_social_group_file(language_1_path)
+
+    language_1 = os.path.basename(language_1_path).split("_")[0]
+
+    assert ok1
+
+    language_1 = Language(args.language_1)
+
+    if verbose:
+        print("Checking File formats")
+
+    if verbose:
+        print("Extracting Social Group data")
+
+    prompts_language_1, social_groups_language_1 = extract_prompts_groups(language_data_1, social_group)
+    emotions_extract_1 = emotion_per_groups(prompts_language_1, social_groups_language_1[social_group], language_1,
+                                  model, model_attributes, 300, False, 
+                                  lex_path, verbose)
+    
+    emotions_extract_1[1].to_csv(f"{output_dir}/matrix_{language_1.name}_{social_group}.csv", index = True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
-    parser.add_argument('--social_groups', nargs='+', default=['age', 'lifestyle'], help="Social Groups to Analyse.")
-    parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
+    parser.add_argument('--social_groups', nargs='+', default=social_groups, help="Social Groups to Analyse.")
+    parser.add_argument('--language_1_path', type=str, default="social_groups/english_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
-    parser.add_argument('--output_dir', type=str, default="out/test", help="Output directory for generated data.")
+    parser.add_argument('--output_dir', type=str, default="out/emotion_profiles/", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
@@ -373,7 +408,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_top_k', type=int, default=20, help="Top K results used for matrix generation.")
     parser.add_argument('--lexicon_path_1', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
     parser.add_argument('--lexicon_path_2', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
-    parser.add_argument('--verbose', action="store_true")
+    parser.add_argument('--verbose', action="store_false")
     parser.add_argument('--no_output_saving', action="store_false")
 
     args = parser.parse_args()
@@ -412,7 +447,9 @@ if __name__ == "__main__":
     
     assert model_attributes is not None
 
-    run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
+    # run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
+    for group in social_groups:
+        run_emotion_profile(group, args.language_1_path, model, model_attributes, args.lexicon_path_1, args.verbose, args.output_dir)
 
 
 
