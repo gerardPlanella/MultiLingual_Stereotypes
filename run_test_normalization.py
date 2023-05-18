@@ -13,17 +13,24 @@ import os
 import pickle
 from snowballstemmer import stemmer
 from sklearn.metrics.pairwise import cosine_similarity
+from transformers import XLMRobertaTokenizer, BertTokenizer
+import torch 
+from langdetect import detect
+from langdetect.lang_detect_exception import LangDetectException
+from nltk.corpus import words
 
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
+nltk.download('words')
 
 social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle"]
 
 def emotion_per_groups(prompts:dict, social_groups, 
                        language:Language, model_name:Models, 
-                       model_attributes:dict, 
+                       model_attributes:dict,
+                       top_k:int, 
                        stemming = False, 
                        lex_path = "data/emolex.json", 
                        verbose = False):
@@ -63,8 +70,13 @@ def emotion_per_groups(prompts:dict, social_groups,
         else:
             raise Exception(f"No stemmer found for language {language.value}")
     #Load the LM 
-    unmasker = load_model(model_name, model_attributes)
+    model = load_model(model_name, model_attributes, True)
+    tokenizer = XLMRobertaTokenizer.from_pretrained('xlm-roberta-base')
+    # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
+    #load the priors 
+    with open(f'social_groups/prior_probs/{language.name.lower()}_priors.json') as file:
+        priors = json.load(file)
     #load emotion lexicon dictionnary
     with open(lex_path, "r", encoding="utf-8") as f:
         emolex = json.load(f)
@@ -82,26 +94,52 @@ def emotion_per_groups(prompts:dict, social_groups,
             prompt_list = prompts["general"]
 
         for j, prompt in enumerate(prompt_list):
-            preds = unmasker(prompt.format(group))
-            for pred in preds:
-                if use_stemmer is not None and language.value!="greek":
-                    word_pred = use_stemmer.stem(pred['token_str'])
-                elif language.value=="greek" and stemming == True:
-                    word_pred = use_stemmer.stemWord(pred["token_str"])
-                else:
-                    word_pred = pred["token_str"]
+            input_ids = tokenizer.encode(prompt.format(group), return_tensors='pt')
+            # Get the position of the masked token
+            mask_token_index = torch.where(input_ids == tokenizer.mask_token_id)[1]
+            # mask_token_index = input_ids.index(tokenizer.mask_token_id)
+            # Forward pass through the model
+            outputs = model(input_ids)
+            # Get the token probabilities, token_probs of size [1, 250002]
+            token_probs = outputs.logits[0, mask_token_index, :].softmax(dim=1)
+            # Get the scores for all words in the vocabulary
+            all_scores = token_probs[0].tolist()
 
-                if word_pred in emolex:
-                    matrix_emotion[i] += emolex[word_pred]
+            results = [np.log(i) - np.log(j) for i, j in zip(all_scores, priors[prompt])]
+            top_300_indices = np.argsort(results)[::-1]
+            top_300_words = [tokenizer.decode(i) for i in top_300_indices]
+            # english_words = select_english_words(top_300_words, 300)
+            # results_division = [i/j for i, j in zip(all_scores, priors[prompt])]
+            # top_200_indices_div = np.argsort(results_division)[::-1]
+            # top_200_words_div = [tokenizer.decode(i) for i in top_200_indices_div]
+
+            # results_division_square = [i/np.sqrt(j) for i, j in zip(all_scores, priors[prompt])]
+            # top_200_indices_div_square = np.argsort(results_division_square)[::-1]
+            # top_200_words_div_square = [tokenizer.decode(i) for i in top_200_indices_div_square]
+
+            # top_200_english_words = []
+            g = 0
+            top_300_english_words = []
+            while len(top_300_english_words)<200:
+                try:
+                    if detect(tokenizer.decode(top_300_indices[g])) == 'fr':
+                        top_300_english_words.append(tokenizer.decode(top_300_indices[g]))
+                    g += 1
+                except LangDetectException:
+                    g += 1
+                    pass
+
+
+            for word in top_300_words:
+                if word in emolex:
+                    matrix_emotion[i] += emolex[word]
                     k += 1
-                    n_found_in_group += 1
+                    n_found_in_group = 0
                 else:
                     l += 1
                 # list_matrix_emotions.append(matrix_emotion[i])
                 # list_dataframes.append(pd.DataFrame(matrix_emotion[i], index=social_groups, columns=column_labels))
-        
         matrix_emotion[i] /= n_found_in_group
-
 
     if verbose:
         print(f"{l} words are not in the lexicon")
@@ -112,6 +150,18 @@ def emotion_per_groups(prompts:dict, social_groups,
     if verbose:
         print(df)
     return matrix_emotion, df
+
+def select_english_words(word_list, k):
+    english_words_set = set(words.words()) # Convert to set for faster lookup
+    english_words = []
+
+    for word in word_list:
+        if word.lower() in english_words_set:
+            english_words.append(word)
+            if len(english_words) == k:
+                break
+
+    return english_words
 
 def spearman_correlation(matrix_1:pd.DataFrame, matrix_2:pd.DataFrame):
     list_correlation = []
@@ -256,8 +306,6 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
 
     file_formats_ok = check_n_prompts_groups(language_data_1, language_data_2, use_local_prompts)
 
-    assert file_formats_ok
-
     if verbose:
         print("Extracting Social Group data")
 
@@ -285,7 +333,7 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
         emotions_extract_2 = emotion_per_groups(prompts_language_2, social_groups_language_2[social_groups[i]], language_2,
                                   model, model_attributes, stemming_l2, 
                                   lex_path, verbose)
-        
+        emotion_per_groups()
 
         list_matrix_l1.append(emotions_extract_1[0])
         list_df_l1.append(emotions_extract_1[1])
@@ -311,52 +359,22 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
     if verbose:
         print("Data Saved.")
 
-def run_emotion_profile(social_group, language_1_path, model, model_attributes, lex_path, verbose, output_dir, use_local_prompts = True):
-
-    ok1, language_data_1 = load_social_group_file(language_1_path)
-
-    language_1 = os.path.basename(language_1_path).split("_")[0]
-
-    assert ok1
-
-    language_1 = Language(args.language_1)
-
-    if verbose:
-        print("Checking File formats")
-
-    if verbose:
-        print("Extracting Social Group data")
-
-    prompts_language_1, social_groups_language_1 = extract_prompts_groups(language_data_1, social_group)
-    emotions_extract_1 = emotion_per_groups(prompts_language_1, social_groups_language_1[social_group], language_1,
-                                  model, model_attributes, False, 
-                                  lex_path, verbose)
-    
-    emotions_extract_1[1].to_csv(f"{output_dir}/matrix_{language_1.name}_{social_group}.csv", index = True)
-
-def calculate_average_emotions(df):
-    # Exclude the first column (row labels) from the mean calculation
-    emotions_columns = df.columns[1:]  # Exclude the first column
-    average_emotions = df[emotions_columns].mean()
-
-    return average_emotions
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
-    parser.add_argument('--social_groups', nargs='+', default="racial_minorities", help="Social Groups to Analyse.")
-    parser.add_argument('--language_1_path', type=str, default="social_groups/english_data.json", help="Language 1 to analyse.")
+    parser.add_argument('--social_groups', nargs='+', default=['age', 'lifestyle'], help="Social Groups to Analyse.")
+    parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
-    parser.add_argument('--output_dir', type=str, default="out/pretrained/emotion_profile", help="Output directory for generated data.")
+    parser.add_argument('--output_dir', type=str, default="out/test", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model Evaluated")
-    parser.add_argument('--model_top_k', type=int, default=200, help="Top K results used for matrix generation.")
+    parser.add_argument('--model_top_k', type=int, default=20, help="Top K results used for matrix generation.")
     parser.add_argument('--lexicon_path_1', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
     parser.add_argument('--lexicon_path_2', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
     parser.add_argument('--verbose', action="store_true")
-    parser.add_argument('--no_output_saving', action="store_true")
+    parser.add_argument('--no_output_saving', action="store_false")
 
     args = parser.parse_args()
 
@@ -385,11 +403,18 @@ if __name__ == "__main__":
             "pipeline":"fill-mask",
             "top_k":args.model_top_k
         }
+
+    if model == Models.BERT:
+        model_attributes = {
+            "pipeline":"fill-mask",
+            "top_k":args.model_top_k
+        }
     
     assert model_attributes is not None
 
-    # run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
-    # run_emotion_profile(args.social_groups, args.language_1_path, model, model_attributes, args.lexicon_path_1, args.verbose, args.output_dir)
+    run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
+
+
 
     # if args.verbose:
     #     print("Reading Social Group files")
