@@ -87,6 +87,10 @@ if __name__ == "__main__":
             words_in_file = set(line.strip() for line in f)
             print(len(words_in_file))
 
+    if args.language == Language.Croatian:
+        with open(f'words_dictionnaries/cro.txt', 'r') as f:
+            words_in_file = set(line.strip() for line in f)
+            print(len(words_in_file))
     if verbose:
         print("Extracting Social Group data")
 
