@@ -7,13 +7,25 @@ from run_test import load_social_group_file, extract_prompts_groups
 from collections import defaultdict
 
 
-def create_score_list(data):
+def create_score_list(data, word_list, model):
+
     max_token = max(item['token'] for item in data)
     score_list = [None] * (max_token + 1)
+    words_counted_in_file = 0
+    words_not_in_file = 0
     for item in data:
-        token = item['token']
+        token_id = item['token']
         score = item['score']
-        score_list[token] = score
+        token = model.tokenizer.decode(token_id)
+        if token in word_list:
+            score_list[token_id] = score
+            words_counted_in_file += 1
+        else:
+            score_list[token_id] = 100
+            words_not_in_file += 1
+
+    print(f'The words retrieved in the text file are {words_counted_in_file}')
+    print(f'The words retrieved in the text file are {words_not_in_file}')
     return score_list
 
 
@@ -21,11 +33,11 @@ social_groups = ["religion", "age", "gender", "countries", "race", "profession",
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Prior probability creation.')
-    parser.add_argument('--language_path', type=str, default="social_groups/english_data.json", help="Language to analyse.")
+    parser.add_argument('--language_path', type=str, default="social_groups/spanish_data.json", help="Language to analyse.")
     parser.add_argument('--output_dir', type=str, default="./prior_probs", help="Output directory for generated data.")
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model Evaluated")
     parser.add_argument('--model_top_k', type=int, default=250002, help="Top K results used for matrix generation, set this to the vocabulary size.")
-    parser.add_argument('--verbose', action="store_true")
+    parser.add_argument('--verbose', action="store_false")
 
     args = parser.parse_args()
     verbose = args.verbose
@@ -60,6 +72,21 @@ if __name__ == "__main__":
 
     assert ok
 
+    if args.language == Language.English:
+        with open(f'words_dictionnaries/en.txt', 'r') as f:
+            words_in_file = set(line.strip() for line in f)
+            print(len(words_in_file))
+
+    elif args.language == Language.French:
+        with open(f'words_dictionnaries/fr.txt', 'r') as f:
+            words_in_file = set(line.strip() for line in f)
+            print(len(words_in_file))
+
+    if args.language == Language.Spanish:
+        with open(f'words_dictionnaries/es.txt', 'r') as f:
+            words_in_file = set(line.strip() for line in f)
+            print(len(words_in_file))
+
     if verbose:
         print("Extracting Social Group data")
 
@@ -82,7 +109,7 @@ if __name__ == "__main__":
         prompt_masked = prompt.replace("{}", "<mask>")
         out = unmasker(prompt_masked)[1]
 
-        priors[prompt] = create_score_list(out)
+        priors[prompt] = create_score_list(out, words_in_file, unmasker)
 
     if verbose:
         print("Saving to " + out_path)

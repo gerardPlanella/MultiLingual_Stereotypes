@@ -2,6 +2,7 @@ from transformers import pipeline
 from enum import Enum
 from transformers import XLMRobertaForMaskedLM, XLMRobertaTokenizer, DataCollatorForLanguageModeling
 from transformers import BertTokenizer, BertModel, BertForMaskedLM
+import json 
 
 class Models(Enum):
     XLMR = "xlm-roberta-base"
@@ -26,7 +27,7 @@ def load_model(model:Models, model_attributes:dict = {}, pre_trained = False):
             return model
         # model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-base")
         # model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-finetuned/fox_news/checkpoint-500/")
-        # model = pipeline(model_attributes["pipeline"], model=model.value, top_k=model_attributes["top_k"])
+        model = pipeline(model_attributes["pipeline"], model=model.value, top_k=model_attributes["top_k"])
         # model = pipeline(model_attributes["pipeline"], model = model, tokenizer=XLMRobertaTokenizer.from_pretrained("xlm-roberta-base"), top_k=model_attributes["top_k"])
     elif model.value == "bert-base-uncased":
         assert "top_k" in model_attributes
@@ -44,4 +45,5 @@ if __name__ == "__main__":
         "top_k":10
     }
     unmasker = load_model(model, model_attributes)
-    print(unmasker("The word პატრონ is <mask>."))
+    unmasker.tokenizer.decode(8)
+    print(unmasker.tokenizer.decode(8))
