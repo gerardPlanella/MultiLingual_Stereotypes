@@ -1,9 +1,11 @@
 from transformers import pipeline
 from enum import Enum
 from transformers import XLMRobertaForMaskedLM, XLMRobertaTokenizer, DataCollatorForLanguageModeling
+from transformers import BertTokenizer, BertModel, BertForMaskedLM
 
 class Models(Enum):
     XLMR = "xlm-roberta-base"
+    BERT = "bert-base-uncased"
 
     @classmethod
     def has_value(cls, value):
@@ -22,11 +24,15 @@ def load_model(model:Models, model_attributes:dict = {}, pre_trained = False):
             model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-base")
             # model = XLMRobertaForMaskedLM.from_pretrained("./checkpoint-10625")
             return model
-        model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-base")
+        # model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-base")
         # model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-finetuned/fox_news/checkpoint-500/")
         # model = pipeline(model_attributes["pipeline"], model=model.value, top_k=model_attributes["top_k"])
-        model = pipeline(model_attributes["pipeline"], model = model, tokenizer=XLMRobertaTokenizer.from_pretrained("xlm-roberta-base"), top_k=model_attributes["top_k"])
-         
+        # model = pipeline(model_attributes["pipeline"], model = model, tokenizer=XLMRobertaTokenizer.from_pretrained("xlm-roberta-base"), top_k=model_attributes["top_k"])
+    elif model.value == "bert-base-uncased":
+        assert "top_k" in model_attributes
+        assert "pipeline" in model_attributes
+        model = BertForMaskedLM.from_pretrained("bert-base-uncased")
+        # model = pipeline(model_attributes["pipeline"], model='bert-base-uncased', top_k = model_attributes["top_k"])
     else:
         raise Exception(f"Model {model.value} not implemented.")
     return model
@@ -38,4 +44,4 @@ if __name__ == "__main__":
         "top_k":10
     }
     unmasker = load_model(model, model_attributes)
-    print(unmasker("Why are there so many <mask> in my country?"))
+    print(unmasker("The word პატრონ is <mask>."))
