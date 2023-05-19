@@ -300,7 +300,7 @@ def extract_prompts_groups(data:dict, groups:list):
                 items[key] += data[key]["items"]
                 
     return prompts, items
-def run_correlations_from_csv(social_groups, language_1_path, language_2_path, verbose):
+def run_correlations_from_csv(social_groups, language_1_path, language_2_path, verbose, output_dir):
     
     language_1 = os.path.basename(language_1_path).split("_")[0]
     language_2 = os.path.basename(language_2_path).split("_")[0]
@@ -309,12 +309,11 @@ def run_correlations_from_csv(social_groups, language_1_path, language_2_path, v
     if verbose:
         print("Computing Correlations")
     for group in social_groups:
-        df_1 = pd.read_csv(f'out/emotion_profiles/{language_1}/{group}.csv').values[:,1:]
-        df_2 = pd.read_csv(f'out/emotion_profiles/{language_2}/{group}.csv').values[:,1:]
+        df_1 = pd.read_csv(f'{output_dir}/emotion_profiles/{language_1}/{group}.csv').values[:,1:]
+        df_2 = pd.read_csv(f'{output_dir}/emotion_profiles/{language_2}/{group}.csv').values[:,1:]
 
-        coeff_emotions_RSA.append(spearman_correlation(similarity_matrix(df_1), similarity_matrix(df_2)))
-        with open('out/spearman_correlations_RSA' + f"/{language_1}_{language_2}_{group}.json", 'w') as f:
-            json.dump(coeff_emotions_RSA, f)
+        with open('{output_dir}/spearman_correlations_RSA' + f"/{language_1}_{language_2}/{group}.json", 'w') as f:
+            json.dump(spearman_correlation(similarity_matrix(df_1), similarity_matrix(df_2)), f)
 
     if verbose:
         print("Correlations computed")
@@ -416,9 +415,9 @@ def run_emotion_profile(social_group, language_1_path, model, model_attributes, 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
     parser.add_argument('--social_groups', nargs='+', default=social_groups, help="Social Groups to Analyse.")
-    parser.add_argument('--language_1_path', type=str, default="social_groups/english_data.json", help="Language 1 to analyse.")
-    parser.add_argument('--language_2_path', type=str, default="social_groups/french_data.json", help="Language 2 to analyse.")
-    parser.add_argument('--output_dir', type=str, default="out/emotion_profiles/", help="Output directory for generated data.")
+    parser.add_argument('--language_1_path', type=str, default="social_groups/french_data.json", help="Language 1 to analyse.")
+    parser.add_argument('--language_2_path', type=str, default="social_groups/greek_data.json", help="Language 2 to analyse.")
+    parser.add_argument('--output_dir', type=str, default="out/pretrained_roberta/", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
