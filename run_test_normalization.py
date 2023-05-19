@@ -28,6 +28,7 @@ nltk.download('averaged_perceptron_tagger')
 nltk.download('words')
 
 social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle"]
+social_groups = ["race", "profession", "political", "sexuality", "lifestyle"]
 
 def emotion_per_groups(prompts:dict, social_groups, 
                        language:Language, model_name:Models, 
@@ -111,7 +112,7 @@ def emotion_per_groups(prompts:dict, social_groups,
             all_scores = token_probs[0].tolist()
 
             results = [np.log(i) - np.log(j) for i, j in zip(all_scores, priors[prompt])]
-            top_300_indices = np.argsort(results)[::-1][0:300]
+            top_300_indices = np.argsort(results)[::-1][0:top_k]
             top_300_words = [tokenizer.decode(i) for i in top_300_indices]
 
             # if language.value == 'english':
@@ -398,14 +399,14 @@ def run_emotion_profile(social_group, language_1_path, model, model_attributes, 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
     parser.add_argument('--social_groups', nargs='+', default=social_groups, help="Social Groups to Analyse.")
-    parser.add_argument('--language_1_path', type=str, default="social_groups/english_data.json", help="Language 1 to analyse.")
+    parser.add_argument('--language_1_path', type=str, default="social_groups_2/english_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
     parser.add_argument('--output_dir', type=str, default="out/emotion_profiles/", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model Evaluated")
-    parser.add_argument('--model_top_k', type=int, default=20, help="Top K results used for matrix generation.")
+    parser.add_argument('--model_top_k', type=int, default=300, help="Top K results used for matrix generation.")
     parser.add_argument('--lexicon_path_1', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
     parser.add_argument('--lexicon_path_2', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
     parser.add_argument('--verbose', action="store_false")
