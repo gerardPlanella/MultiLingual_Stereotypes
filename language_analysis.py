@@ -128,13 +128,18 @@ plt.title('2-Dimension PCA for language data in WALS')
 plt.show()
 
 
-# Filter the PCA data based on the subset of names
-subset_pca_data = pca_data[df_cleaned["Name"].isin(subset_names)]
 
 # Compute the Euclidean distances between the subset of PCA data
-distances = euclidean_distances(subset_pca_data)
+distances = euclidean_distances(pca_data)
 
 # Create a distance DataFrame
-distance_df = pd.DataFrame(distances, index=subset_names, columns=subset_names)
+distance_df = pd.DataFrame(distances, index=df_cleaned["Name"], columns=df_cleaned["Name"])
 
-print(distance_df)
+to_remove = list(set(languages) - set(subset_names))
+# Remove rows and columns from the distance DataFrame
+distance_df_filtered = distance_df.drop(to_remove, axis=0).drop(to_remove, axis=1)
+
+print(distance_df_filtered)
+
+
+
