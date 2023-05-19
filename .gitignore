@@ -28,6 +28,8 @@ share/python-wheels/
 MANIFEST
 data/
 all_the_news/
+xlm-roberta-finetuned.zip
+out_job/
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -163,3 +165,5 @@ cython_debug/
 
 
 prior_probs
+xlm-roberta-finetuned.zip
+xlm-roberta-finetuned (2).zip
