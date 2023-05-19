@@ -301,6 +301,13 @@ def extract_prompts_groups(data:dict, groups:list):
                 items[key] += data[key]["items"]
                 
     return prompts, items
+def run_correlations_from_csv(social_groups, language_1_path, language_2_path, model, model_attributes, lex_path, verbose, output_dir, use_local_prompts = True):
+    
+    language_1 = os.path.basename(language_1_path).split("_")[0]
+    language_2 = os.path.basename(language_2_path).split("_")[0]
+    
+    for group in social_groups:
+        df_1 = pd.read_csv('out/emotion_profiles/{}/')
 
 def run_all_groups(social_groups, language_1_path, language_2_path, model, model_attributes, stemming_l1, stemming_l2, lex_path, verbose, output_dir, use_local_prompts = True):
 
@@ -394,7 +401,7 @@ def run_emotion_profile(social_group, language_1_path, model, model_attributes, 
                                   model, model_attributes, top_k, False, 
                                   lex_path, verbose)
     
-    emotions_extract_1[1].to_csv(f"{output_dir}/matrix_{language_1.name}_{social_group}.csv", index = True)
+    emotions_extract_1[1].to_csv(f"{output_dir}/{language_1.name}/{social_group}.csv", index = True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
