@@ -28,7 +28,7 @@ nltk.download('averaged_perceptron_tagger')
 nltk.download('words')
 
 social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle"]
-social_groups_2 = ["race", "profession", "political", "sexuality", "lifestyle"]
+social_groups_2 = ["profession", "political", "sexuality", "lifestyle"]
 
 def emotion_per_groups(prompts:dict, social_groups, 
                        language:Language, model_name:Models, 

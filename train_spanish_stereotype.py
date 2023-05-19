@@ -15,7 +15,7 @@ import math
 import logging
 logging.basicConfig(level=logging.INFO)
 
-csv.field_size_limit(sys.maxsize)
+# csv.field_size_limit(sys.maxsize)
 
 def log_loss_callback(eval_args, metrics, **kwargs):
     if eval_args.step % 10 == 0:
@@ -25,12 +25,22 @@ def tokenize_function(examples, max_seq_length):
     tokenizer = XLMRobertaTokenizer.from_pretrained("xlm-roberta-base")
     return tokenizer(examples, return_special_tokens_mask=True, padding='max_length', truncation=True, max_length=max_seq_length)
 
+def truncate_articles(articles):
+    truncated_articles = []
+    for article in articles:
+        words = article.split(' ')
+        if len(words) > 293:
+            words = words[:293]
+        truncated_article = ' '.join(words)
+        truncated_articles.append(truncated_article)
+    return truncated_articles
+
 class TextDataset(Dataset):
     def __init__(self, text):
         self.text = text
         self.tokenizer = XLMRobertaTokenizer.from_pretrained('xlm-roberta-base')
         # Compute the maximum length
-        self.max_length = max(len(self.tokenizer.encode(t)) for t in text)
+        self.max_length = 512
 
     def __len__(self):
         return len(self.text)
@@ -49,7 +59,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model to be fine-tuned")
     parser.add_argument('--dataset_name', type=str, default="wikitext", help="Dataset name")
     parser.add_argument('--dataset_version', type=str, default="wikitext-103-raw-v1", help="Dataset version")
-    parser.add_argument('--epochs', type=int, default=1)
+    parser.add_argument('--epochs', type=int, default=5)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--news_source', type=str, default="Fox News")
     parser.add_argument('--verbose', action="store_true")
@@ -57,9 +67,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    # Read the CSV file into a DataFrame
-    df = pd.read_csv('data/crows_pairs_FR.csv', sep='\t', header=None, names=['Paragraph1', 'Paragraph2', 'Label', 'Bias_Type'])
 
     model_attributes = { 
         "pipeline":"fill-mask", 
@@ -70,11 +77,12 @@ if __name__ == "__main__":
 
     model = load_model(model, model_attributes, pre_trained = True)
     model = model.to(device)
-    csv_file = "data/crows_pairs_FR.csv"
-    df = pd.read_csv(csv_file, sep='\t', header=None, names=['Paragraph_1', 'Paragraph_2', 'Label', 'Bias_Type'])
+    csv_file = "data/data_larazon_publico_v2.csv"
+    df = pd.read_csv(csv_file, names=['auto_index', 'index', 'cuerpo', 'headline'])
 
-    df = df[df['Label'] == 'stereo']
-    df_list = df['Paragraph_1'].tolist()
+    df = df.iloc[:5000]
+    df_list = df['cuerpo'].tolist()[1:]
+
 
     dataset = TextDataset(df_list)
     dataloader = DataLoader(dataset, batch_size=8)
@@ -83,7 +91,7 @@ if __name__ == "__main__":
 
     model.train()
     for epoch in range(args.epochs):  # Number of training epochs
-        for batch in dataloader:
+        for i, batch in enumerate(dataloader):
             # Get the inputs and move them to the GPU
             inputs = batch['input_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
@@ -95,7 +103,12 @@ if __name__ == "__main__":
             # Backward pass and optimization
             loss.backward()
             optimizer.step()
-            optimizer.zero_grad()
+            optimizer.zero_grad() 
+
+            # Print loss every 50 batches
+            if (i+1) % 50 == 0:
+                print(f'Epoch [{epoch+1}/{args.epochs}], Step [{i+1}/{len(dataloader)}], Loss: {loss.item()}')
+
 
         print(f"Epoch {epoch + 1} Loss: {loss.item()}")
         model.save_pretrained(f"{args.output_directory}/checkpoint_epoch_{epoch + 1}")
