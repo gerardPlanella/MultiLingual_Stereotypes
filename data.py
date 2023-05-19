@@ -112,9 +112,6 @@ class Stem_Language(Enum):
     Catalan = False
     Serbian = False
 
-def tokenize_function(examples, max_seq_length):
-    tokenizer = XLMRobertaTokenizer.from_pretrained("xlm-roberta-base")
-    return tokenizer(examples, return_special_tokens_mask=True, padding='max_length', truncation=True, max_length=max_seq_length)
 
 def preprocessing_fine_tuning(dataset_name, dataset_version, tokenizer):
     print("Loading dataset.")
