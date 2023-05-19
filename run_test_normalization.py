@@ -373,7 +373,7 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
     if verbose:
         print("Data Saved.")
 
-def run_emotion_profile(social_group, language_1_path, model, model_attributes, lex_path, verbose, output_dir, use_local_prompts = True):
+def run_emotion_profile(social_group, language_1_path, model, model_attributes, lex_path, verbose, output_dir, top_k, use_local_prompts = True):
 
     ok1, language_data_1 = load_social_group_file(language_1_path)
 
@@ -391,7 +391,7 @@ def run_emotion_profile(social_group, language_1_path, model, model_attributes, 
 
     prompts_language_1, social_groups_language_1 = extract_prompts_groups(language_data_1, social_group)
     emotions_extract_1 = emotion_per_groups(prompts_language_1, social_groups_language_1[social_group], language_1,
-                                  model, model_attributes, 300, False, 
+                                  model, model_attributes, top_k, False, 
                                   lex_path, verbose)
     
     emotions_extract_1[1].to_csv(f"{output_dir}/matrix_{language_1.name}_{social_group}.csv", index = True)
@@ -450,7 +450,7 @@ if __name__ == "__main__":
 
     # run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
     for group in social_groups:
-        run_emotion_profile(group, args.language_1_path, model, model_attributes, args.lexicon_path_1, args.verbose, args.output_dir)
+        run_emotion_profile(group, args.language_1_path, model, model_attributes, args.lexicon_path_1, args.verbose, args.output_dir, args.model_top_k)
 
 
 
