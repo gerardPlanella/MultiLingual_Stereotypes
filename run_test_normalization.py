@@ -28,7 +28,7 @@ nltk.download('averaged_perceptron_tagger')
 nltk.download('words')
 
 social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle"]
-social_groups = ["race", "profession", "political", "sexuality", "lifestyle"]
+social_groups_2 = ["race", "profession", "political", "sexuality", "lifestyle"]
 
 def emotion_per_groups(prompts:dict, social_groups, 
                        language:Language, model_name:Models, 
@@ -398,8 +398,8 @@ def run_emotion_profile(social_group, language_1_path, model, model_attributes, 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
-    parser.add_argument('--social_groups', nargs='+', default=social_groups, help="Social Groups to Analyse.")
-    parser.add_argument('--language_1_path', type=str, default="social_groups_2/english_data.json", help="Language 1 to analyse.")
+    parser.add_argument('--social_groups', nargs='+', default=social_groups_2, help="Social Groups to Analyse.")
+    parser.add_argument('--language_1_path', type=str, default="social_groups/english_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/english_data.json", help="Language 2 to analyse.")
     parser.add_argument('--output_dir', type=str, default="out/emotion_profiles/", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
