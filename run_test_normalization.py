@@ -312,6 +312,9 @@ def run_correlations_from_csv(social_groups, language_1_path, language_2_path, v
         df_1 = pd.read_csv(f'{output_dir}/emotion_profiles/{language_1}/{group}.csv').values[:,1:]
         df_2 = pd.read_csv(f'{output_dir}/emotion_profiles/{language_2}/{group}.csv').values[:,1:]
 
+        if os.path.exists(f"{output_dir}/spearman_correlations_RSA/{language_1}_{language_2}/") == False:
+            os.mkdir(f"{output_dir}/spearman_correlations_RSA/{language_1}_{language_2}/")
+        
         with open(f'{output_dir}/spearman_correlations_RSA' + f"/{language_1}_{language_2}/{group}.json", 'w') as f:
             json.dump(spearman_correlation(similarity_matrix(df_1), similarity_matrix(df_2)), f)
 
