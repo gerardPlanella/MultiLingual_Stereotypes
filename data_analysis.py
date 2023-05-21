@@ -7,8 +7,8 @@ def find_stats(pre_train_df, fine_tune_df, n = 5):
     dic = {}
     
     for emotion in emotions:
-        max_change = difference[emotion].n
-        min_change = difference[emotion].n
+        max_change = difference[emotion].nlargest(n)
+        min_change = difference[emotion].nsmallest(n)
         
         max_groups = list(difference["group"].loc[max_change.index])
         min_groups = list(difference["group"].loc[min_change.index])
