@@ -252,6 +252,23 @@
             "libaneses"
         ]
     },
+    "racial_minorities":{
+        "prompts": [],
+        "items":["indios", "rusos", "africanos", "personas de color",
+        "mexicanos", "negros","árabes",
+        "americanos negros", "hombres negros",
+        "mujer asiáticas", "hombres asiáticos", "mujeres negras", 
+        "hombres indios", "mujeres indias", "hombres chinos", "mujeres chinas",
+        "padres indios", "padres asiáticos", "padres negros", "latinas", "latinos",
+        "niños asiáticos", "niños negros", "afroamericanos",
+        "nigerianos", "etíopes","sudaneses", "afganos", "iraquíes",
+        "somalíes", "personas iraníes", "iraníes",
+        "ghaneses",
+        "sirios", "paquistaníes",
+        "rumanos", "ecuatorianos",
+        "turcos"
+        ]
+    },
     "profession": {
         "prompts": [],
         "items": [
