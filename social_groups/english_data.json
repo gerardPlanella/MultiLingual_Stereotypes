@@ -56,19 +56,17 @@
     },
     "racial_minorities":{
         "prompts": [],
-        "items":["Indians", "Russians", "Africans", "Black people",
-        "Mexicans", "Blacks","Arabs",
-        "Black Americans", "Black men",
+        "items":["Black people",
+        "Mexicans","Blacks","Arabs", "Black men",
         "Asian women", "Asian men", "Black women", 
         "Indian men", "Indian women", "Chinese men", "Chinese women",
-        "Indian parents", "Asian parents", "Black fathers", "Latinas", "Latinos",
-        "Asian kids", "Black kids", "African Americans",
-        "Nigerians", "Ethiopians","Sudanese people", "Afghans", "Iraqis",
-        "Somalis", "Iranian people", "Iranians",
-        "Ghanaians",
+        "Indian parents", "Asian parents", "Latinas", "Latinos",
+        "Black kids", "African Americans",
+        "Afghans", "Iraqis",
+        "Iranian people", "Iranians",
         "Syrians", "Pakistanis",
-        "Romanians", "Ecuadorians",
-        "Turkish people"
+        "Romanians",
+        "Turkish people", "Muslims", "Mormons", "immigrants", "gay people", "lesbians", "queer people", "homosexuals", "faggots", "fags"
         ]
     },
     "profession":{
