@@ -112,14 +112,6 @@ class Stem_Language(Enum):
     Catalan = False
     Serbian = False
 
-
-def preprocessing_fine_tuning(dataset_name, dataset_version, tokenizer):
-    print("Loading dataset.")
-    dataset = load_dataset(dataset_name, dataset_version)
-    tokenized_dataset = dataset.map(tokenize_function, batched=True, num_proc=4, remove_columns=["text"])
-    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=0.15)
-    return data_collator, tokenized_dataset
-
 if __name__ == "__main__":
     output_path = "data/emolex.json"
     languages =  Language.to_dict()

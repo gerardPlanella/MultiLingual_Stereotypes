@@ -312,6 +312,9 @@ def run_correlations_from_csv(social_groups, language_1_path, language_2_path, v
         df_1 = pd.read_csv(f'{output_dir}/emotion_profiles/{language_1}/{group}.csv').values[:,1:]
         df_2 = pd.read_csv(f'{output_dir}/emotion_profiles/{language_2}/{group}.csv').values[:,1:]
 
+        if os.path.exists(f"{output_dir}/spearman_correlations_RSA/{language_1}_{language_2}/") == False:
+            os.mkdir(f"{output_dir}/spearman_correlations_RSA/{language_1}_{language_2}/")
+        
         with open(f'{output_dir}/spearman_correlations_RSA' + f"/{language_1}_{language_2}/{group}.json", 'w') as f:
             json.dump(spearman_correlation(similarity_matrix(df_1), similarity_matrix(df_2)), f)
 
@@ -409,15 +412,16 @@ def run_emotion_profile(social_group, language_1_path, model, model_attributes, 
     emotions_extract_1 = emotion_per_groups(prompts_language_1, social_groups_language_1[social_group], language_1,
                                   model, model_attributes, top_k, False, 
                                   lex_path, verbose)
-    
-    emotions_extract_1[1].to_csv(f"{output_dir}/{language_1.name}/{social_group}.csv", index = True)
+    if os.path.exists(f"{output_dir}/emotion_profiles/{language_1.name}") == False:
+        os.mkdir(f"{output_dir}/emotion_profiles/{language_1.name}")
+    emotions_extract_1[1].to_csv(f"{output_dir}/emotion_profiles/{language_1.name}/{social_group}.csv", index = True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
     parser.add_argument('--social_groups', nargs='+', default=social_groups, help="Social Groups to Analyse.")
-    parser.add_argument('--language_1_path', type=str, default="social_groups/spanish_data.json", help="Language 1 to analyse.")
+    parser.add_argument('--language_1_path', type=str, default="social_groups/english_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/croatian_data.json", help="Language 2 to analyse.")
-    parser.add_argument('--output_dir', type=str, default="out/pretrained_roberta/", help="Output directory for generated data.")
+    parser.add_argument('--output_dir', type=str, default="out/finetuned_stereoset_english", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
@@ -445,29 +449,29 @@ if __name__ == "__main__":
     if not os.path.exists(args.output_dir) and not args.no_output_saving:
         os.makedirs(args.output_dir)
 
-    # assert Models.has_value(args.model_name)
+    assert Models.has_value(args.model_name)
 
-    # model = Models(args.model_name)
-    # model_attributes = None
+    model = Models(args.model_name)
+    model_attributes = None
 
-    # if model == Models.XLMR:
-    #     model_attributes = {
-    #         "pipeline":"fill-mask",
-    #         "top_k":args.model_top_k
-    #     }
+    if model == Models.XLMR:
+        model_attributes = {
+            "pipeline":"fill-mask",
+            "top_k":args.model_top_k
+        }
 
-    # if model == Models.BERT:
-    #     model_attributes = {
-    #         "pipeline":"fill-mask",
-    #         "top_k":args.model_top_k
-    #     }
+    if model == Models.BERT:
+        model_attributes = {
+            "pipeline":"fill-mask",
+            "top_k":args.model_top_k
+        }
     
-    # assert model_attributes is not None
+    assert model_attributes is not None
 
     # run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
-    # for group in social_groups:
-        # run_emotion_profile(group, args.language_1_path, model, model_attributes, args.lexicon_path_1, args.verbose, args.output_dir, args.model_top_k)
-    run_correlations_from_csv(social_groups, args.language_1_path, args.language_2_path, True, args.output_dir)
+    for group in social_groups:
+        run_emotion_profile(group, args.language_1_path, model, model_attributes, args.lexicon_path_1, args.verbose, args.output_dir, args.model_top_k)
+    # run_correlations_from_csv(social_groups, args.language_1_path, args.language_2_path, True, args.output_dir)
 
 
     # if args.verbose:

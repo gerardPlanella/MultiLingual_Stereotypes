@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=3
 #SBATCH --time=9:00:00
 #SBATCH --mem=32000M
-#SBATCH --output=out_job/train_french_stereotype_%A.out
+#SBATCH --output=out_job/train_greek_stereotype_%A.out
 
 module purge
 module load 2021
@@ -16,4 +16,4 @@ cd $HOME/MultiLingual_Stereotypes
 source activate multilingual
 # Run your code
 #srun python train.py --epochs 1000
-srun python train_french_stereotype.py --output_directory ./xlm-roberta-finetuned/french_fine_tuning --epochs 20
+srun python train_greek_stereotype.py --output_directory ./xlm-roberta-finetuned/greek_fine_tuning --epochs 10
