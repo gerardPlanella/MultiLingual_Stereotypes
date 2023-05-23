@@ -1,5 +1,5 @@
-import seaborn as sns
-import matplotlib.pyplot as plt
+# import seaborn as sns
+# import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import json
@@ -36,7 +36,7 @@ def get_second_elements(root_folder):
         # iterate over all files
         for filename in filenames:
             # check if file is a JSON file
-            if filename == 'race.json':
+            if filename.endswith('json'):
                 # construct full file path
                 file_path = os.path.join(dirpath, filename)
 
@@ -69,5 +69,5 @@ def row_means(dataframe):
     return means_list
 
 if __name__ == "__main__":
-    print(get_second_elements('out\\greek_finetune\spearman_correlations_RSA'))
+    print(get_second_elements('out\\finetuned_stereoset_english\spearman_correlations_RSA'))
     # print(row_means(get_second_elements('out\\spanish_finetune\spearman_correlations_RSA')))

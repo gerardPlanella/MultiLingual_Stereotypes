@@ -2,7 +2,6 @@ import torch
 from transformers import XLMRobertaForMaskedLM, XLMRobertaTokenizer, DataCollatorForLanguageModeling
 from transformers import Trainer, TrainingArguments, EarlyStoppingCallback
 from datasets import load_dataset, Dataset
-from data import tokenize_function, preprocessing_fine_tuning
 from model import load_model, Models
 import argparse
 import pandas as pd
@@ -13,7 +12,7 @@ import math
 import logging
 logging.basicConfig(level=logging.INFO)
 
-csv.field_size_limit(sys.maxsize)
+# csv.field_size_limit(sys.maxsize)
 
 def log_loss_callback(eval_args, metrics, **kwargs):
     if eval_args.step % 10 == 0:
@@ -78,6 +77,7 @@ if __name__ == "__main__":
         per_device_train_batch_size=args.batch_size,
         logging_steps=10,  # logs loss and other metrics every 100 steps
         logging_dir='./logs',
+        learning_rate=0.00001
     )
 
 

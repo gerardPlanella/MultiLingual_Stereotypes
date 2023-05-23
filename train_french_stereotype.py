@@ -2,7 +2,7 @@ import torch
 from transformers import XLMRobertaForMaskedLM, XLMRobertaTokenizer, DataCollatorForLanguageModeling
 from transformers import Trainer, TrainingArguments, EarlyStoppingCallback
 from datasets import load_dataset, Dataset
-from data import preprocessing_fine_tuning
+# from data import preprocessing_fine_tuning
 from model import load_model, Models
 from torch.utils.data import Dataset, DataLoader
 from transformers import AdamW
@@ -15,7 +15,7 @@ import math
 import logging
 logging.basicConfig(level=logging.INFO)
 
-csv.field_size_limit(sys.maxsize)
+# csv.field_size_limit(sys.maxsize)
 
 def log_loss_callback(eval_args, metrics, **kwargs):
     if eval_args.step % 10 == 0:

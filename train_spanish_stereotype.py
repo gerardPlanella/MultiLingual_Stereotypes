@@ -2,7 +2,6 @@ import torch
 from transformers import XLMRobertaForMaskedLM, XLMRobertaTokenizer, DataCollatorForLanguageModeling
 from transformers import Trainer, TrainingArguments, EarlyStoppingCallback
 from datasets import load_dataset, Dataset
-from data import preprocessing_fine_tuning
 from model import load_model, Models
 from torch.utils.data import Dataset, DataLoader
 from transformers import AdamW

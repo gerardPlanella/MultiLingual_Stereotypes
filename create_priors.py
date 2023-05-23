@@ -6,7 +6,7 @@ import json
 import os
 import numpy as np
 
-from run_test import load_social_group_file, extract_prompts_groups
+from run_test_normalization import load_social_group_file, extract_prompts_groups
 from collections import defaultdict
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException

@@ -27,7 +27,7 @@ nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('words')
 
-social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle"]
+social_groups = ["religion", "age", "gender", "countries", "race", "profession", "political", "sexuality", "lifestyle", "racial_minorities"]
 
 def emotion_per_groups(prompts:dict, social_groups, 
                        language:Language, model_name:Models, 
@@ -421,7 +421,7 @@ if __name__ == "__main__":
     parser.add_argument('--social_groups', nargs='+', default=social_groups, help="Social Groups to Analyse.")
     parser.add_argument('--language_1_path', type=str, default="social_groups/english_data.json", help="Language 1 to analyse.")
     parser.add_argument('--language_2_path', type=str, default="social_groups/croatian_data.json", help="Language 2 to analyse.")
-    parser.add_argument('--output_dir', type=str, default="out/finetuned_stereoset_english", help="Output directory for generated data.")
+    parser.add_argument('--output_dir', type=str, default="out/french_finetune", help="Output directory for generated data.")
     parser.add_argument('--stem_1', action="store_true", help="Apply stemming to Language 1.")
     parser.add_argument('--stem_2', action="store_true", help="Apply stemming to Language 2.")
     parser.add_argument('--use_local_prompts', action="store_true", help="If specified, will use social group specific prompts")
@@ -467,12 +467,21 @@ if __name__ == "__main__":
         }
     
     assert model_attributes is not None
-
+    language = ['English', 'French', 'Croatian', 'Greek', 'Spanish']
     # run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
-    for group in social_groups:
-        run_emotion_profile(group, args.language_1_path, model, model_attributes, args.lexicon_path_1, args.verbose, args.output_dir, args.model_top_k)
-    # run_correlations_from_csv(social_groups, args.language_1_path, args.language_2_path, True, args.output_dir)
+    # for group in social_groups:
+    #     run_emotion_profile(group, args.language_1_path, model, model_attributes, args.lexicon_path_1, args.verbose, args.output_dir, args.model_top_k)
+    # run_correlations_from_csv('racial_minorities', args.language_1_path, args.language_2_path, True, args.output_dir)
+    for lang in language:
+        for group in social_groups:
+            df_1 = pd.read_csv(f'out/pretrained_roberta/emotion_profiles/{lang}/{group}.csv').values[:,1:]
+            df_2 = pd.read_csv(f'{args.output_dir}/emotion_profiles/{lang}/{group}.csv').values[:,1:]
 
+            if os.path.exists(f"{args.output_dir}/spearman_correlations_RSA/{lang}_{lang}/") == False:
+                os.mkdir(f"{args.output_dir}/spearman_correlations_RSA/{lang}_{lang}/")
+            
+            with open(f'{args.output_dir}/spearman_correlations_RSA' + f"/{lang}_{lang}/{group}.json", 'w') as f:
+                json.dump(spearman_correlation(similarity_matrix(df_1), similarity_matrix(df_2)), f)
 
     # if args.verbose:
     #     print("Reading Social Group files")
