@@ -16,17 +16,28 @@ class Models(Enum):
     def has_key(cls, value):
         return any(value == item.name for item in cls)
 
-def load_model(model:Models, model_attributes:dict = {}, pre_trained = False):
+def load_model(model:Models, model_attributes:dict = {}, model_name = 'base'):
     if model.value == "xlm-roberta-base":
         assert "top_k" in model_attributes
         assert "pipeline" in model_attributes
 
-        if pre_trained == True:
+        if model_name == 'base':
             model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-base")
             return model
 
-        model = pipeline(model_attributes["pipeline"], model=model.value, top_k=model_attributes["top_k"])
+        if model_name =='french':
+            model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-finetuned\\french_model")
 
+        if model_name =='spanish':
+            model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-finetuned\\spanish_model")
+
+        if model_name =='greek':
+            model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-finetuned\\greek_model")
+
+        if model_name =='english':
+            model = XLMRobertaForMaskedLM.from_pretrained("xlm-roberta-finetuned\\english_model")
+
+        
     elif model.value == "bert-base-uncased":
         assert "top_k" in model_attributes
         assert "pipeline" in model_attributes
@@ -41,6 +52,5 @@ if __name__ == "__main__":
         "pipeline":"fill-mask", 
         "top_k":10
     }
-    unmasker = load_model(model, model_attributes)
-    unmasker.tokenizer.decode(8)
-    print(unmasker.tokenizer.decode(8))
+    unmasker = load_model(model, model_attributes, model_name = 'french')
+    print(unmasker("I am <mask>."))

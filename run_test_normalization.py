@@ -32,6 +32,7 @@ social_groups = ["religion", "age", "gender", "countries", "race", "profession",
 def emotion_per_groups(prompts:dict, social_groups, 
                        language:Language, model_name:Models, 
                        model_attributes:dict,
+                       model_lang:str,
                        top_k:int, 
                        stemming = False, 
                        lex_path = "data/emolex_all_nostemmed.json", 
@@ -72,7 +73,7 @@ def emotion_per_groups(prompts:dict, social_groups,
         else:
             raise Exception(f"No stemmer found for language {language.value}")
     #Load the LM 
-    model = load_model(model_name, model_attributes, True)
+    model = load_model(model_name, model_attributes,model_lang)
     tokenizer = XLMRobertaTokenizer.from_pretrained('xlm-roberta-base')
     # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
@@ -183,7 +184,6 @@ def spearman_correlation(matrix_1:pd.DataFrame, matrix_2:pd.DataFrame):
     mean = np.mean(list_correlation)
     return list_correlation, mean
 
-
 def load_social_group_file(path):
     try:
         with open(path) as f:
@@ -252,7 +252,6 @@ def check_n_prompts_groups(data1, data2, local_prompts:bool):
 
     return ok
 
-
 def similarity_matrix(matrix):
     """
     Calculate the cosine similarity between all pairs of vectors in the input matrix.
@@ -279,7 +278,6 @@ def similarity_matrix(matrix):
 
     return similarity_matrix
 
-
 def extract_prompts_groups(data:dict, groups:list):
     prompts = {}
     items = {}
@@ -300,6 +298,7 @@ def extract_prompts_groups(data:dict, groups:list):
                 items[key] += data[key]["items"]
                 
     return prompts, items
+
 def run_correlations_from_csv(social_groups, language_1_path, language_2_path, verbose, output_dir):
     
     language_1 = os.path.basename(language_1_path).split("_")[0]
@@ -392,8 +391,10 @@ def run_all_groups(social_groups, language_1_path, language_2_path, model, model
     if verbose:
         print("Data Saved.")
 
-def run_emotion_profile(social_group, language_1_path, model, model_attributes, lex_path, verbose, output_dir, top_k, use_local_prompts = True):
-
+def run_emotion_profile(social_group, language_1_path, model, model_attributes,model_name, lex_path, verbose, output_dir, top_k, use_local_prompts = True):
+    """
+    This function runs emotion profile extraction for a specific social group in a specified language.
+    """
     ok1, language_data_1 = load_social_group_file(language_1_path)
 
     language_1 = os.path.basename(language_1_path).split("_")[0]
@@ -410,11 +411,47 @@ def run_emotion_profile(social_group, language_1_path, model, model_attributes, 
 
     prompts_language_1, social_groups_language_1 = extract_prompts_groups(language_data_1, social_group)
     emotions_extract_1 = emotion_per_groups(prompts_language_1, social_groups_language_1[social_group], language_1,
-                                  model, model_attributes, top_k, False, 
+                                  model, model_attributes, model_name, top_k, False, 
                                   lex_path, verbose)
     if os.path.exists(f"{output_dir}/emotion_profiles/{language_1.name}") == False:
         os.mkdir(f"{output_dir}/emotion_profiles/{language_1.name}")
     emotions_extract_1[1].to_csv(f"{output_dir}/emotion_profiles/{language_1.name}/{social_group}.csv", index = True)
+
+def emotion_profile_all(model, model_attributes, model_name, lexicon_path_1, verbose, output_dir, top_k):
+    """
+    This function generates emotion profiles for a given set of social groups in multiple languages. 
+
+    Parameters:
+    -----------
+    model : object
+        The pre-trained language model to be used.
+        
+    model_attributes : dict
+        Dictionary containing the attributes of the model.
+        
+    lexicon_path_1 : str
+        Path to the first lexicon file to be used.
+        
+    verbose : bool
+        If True, the function will print logs for debugging and progress tracking.
+        
+    output_dir : str
+        The directory where the output files will be saved.
+        
+    top_k : int
+        The number of top scoring emotions to be considered in the profile.
+        
+    Returns:
+    --------
+    None
+        This function does not return a value. It saves the generated emotion profiles to the output directory.
+        
+    """
+
+    language_path = ['social_groups/english_data.json','social_groups/french_data.json','social_groups/spanish_data.json','social_groups/greek_data.json','social_groups/croatian_data.json']
+    for group in args.social_groups:
+        for lang_path in language_path:
+            run_emotion_profile(group, lang_path, model, model_attributes, model_name, lexicon_path_1, verbose, output_dir, top_k)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
@@ -431,6 +468,7 @@ if __name__ == "__main__":
     parser.add_argument('--lexicon_path_2', type=str, default="data/emolex_all_nostemmed.json", help="Path to Lexicon.")
     parser.add_argument('--verbose', action="store_false")
     parser.add_argument('--no_output_saving', action="store_false")
+    parser.add_argument('--finetuned_model', default = 'french' )
 
     args = parser.parse_args()
 
@@ -467,97 +505,6 @@ if __name__ == "__main__":
         }
     
     assert model_attributes is not None
-    language = ['English', 'French', 'Croatian', 'Greek', 'Spanish']
-    # run_all_groups(args.social_groups, args.language_1_path, args.language_2_path, model, model_attributes, args.stem_1, args.stem_2, args.lexicon_path_1, args.verbose, args.output_dir)
-    # for group in social_groups:
-    #     run_emotion_profile(group, args.language_1_path, model, model_attributes, args.lexicon_path_1, args.verbose, args.output_dir, args.model_top_k)
-    # run_correlations_from_csv('racial_minorities', args.language_1_path, args.language_2_path, True, args.output_dir)
-    for lang in language:
-        for group in social_groups:
-            df_1 = pd.read_csv(f'out/pretrained_roberta/emotion_profiles/{lang}/{group}.csv').values[:,1:]
-            df_2 = pd.read_csv(f'{args.output_dir}/emotion_profiles/{lang}/{group}.csv').values[:,1:]
 
-            if os.path.exists(f"{args.output_dir}/spearman_correlations_RSA/{lang}_{lang}/") == False:
-                os.mkdir(f"{args.output_dir}/spearman_correlations_RSA/{lang}_{lang}/")
-            
-            with open(f'{args.output_dir}/spearman_correlations_RSA' + f"/{lang}_{lang}/{group}.json", 'w') as f:
-                json.dump(spearman_correlation(similarity_matrix(df_1), similarity_matrix(df_2)), f)
+    emotion_profile_all(model, model_attributes, args.finetuned_model,args.lexicon_path_1, args.verbose, args.output_dir, args.model_top_k)
 
-    # if args.verbose:
-    #     print("Reading Social Group files")
-
-    # ok1, language_data_1 = load_social_group_file(args.language_1_path)
-    # ok2, language_data_2 = load_social_group_file(args.language_2_path)
-
-    # assert ok1 and ok2 
-
-    # if args.verbose:
-    #     print("Checking File formats")
-
-    # file_formats_ok = check_n_prompts_groups(language_data_1, language_data_2, args.use_local_prompts)
-
-
-    # assert file_formats_ok
-
-    # if args.verbose:
-    #     print("Extracting Social Group data")
-
-    # prompts_language_1, social_groups_language_1 = extract_prompts_groups(language_data_1, args.social_groups, args.use_local_prompts)
-    # prompts_language_2, social_groups_language_2 = extract_prompts_groups(language_data_2, args.social_groups, args.use_local_prompts)
-
-    # if args.verbose:
-    #     print("Computing Matrix 1")
-    
-    # matrix_1, df1 = emotion_per_groups(prompts_language_1, social_groups_language_1, args.language_1,
-    #                               model, model_attributes,stemming = args.stem_1, 
-    #                               lex_path=args.lexicon_path, verbose=args.verbose)
-    
-    # if args.verbose:
-    #     print("Computing Matrix 2")
-
-    
-    
-    # matrix_2, df2 = emotion_per_groups(prompts_language_2, social_groups_language_2, args.language_2,
-    #                               model, model_attributes,stemming = args.stem_2, 
-    #                               lex_path=args.lexicon_path, verbose=args.verbose)
-
-
-    # sim_matrix_1 = similarity_matrix(matrix_1)
-    # sim_matrix_2 = similarity_matrix(matrix_2)
-
-    # if args.verbose:
-    #     print("Computing Correlation")
-
-    # coeffs_emotion = spearman_correlation(matrix_1, matrix_2)
-    # coeffs_sim = spearman_correlation(sim_matrix_1, sim_matrix_2)
-
-    # if args.verbose:
-    #     print(f"----- Matrix for Language {args.language_1.name} --------")
-    #     print(df1)
-    #     print(f"\n\n\n----- Matrix for Language {args.language_2.name} --------")
-    #     print(df2)
-    #     print("\n\n\n------ Correlation Vector -------")
-    #     print(coeffs_emotion[0])
-    #     print("\n\n\n------ Mean of Correlation -------")
-    #     print(coeffs_emotion[1])
-    #     print("\n\n\n------ Correlation Vector RSA -------")
-    #     print(coeffs_sim[0])
-    #     print("\n\n\n------ Mean of Correlation RSA -------")
-    #     print(coeffs_sim[1])
-
-
-    # if not args.no_output_saving:
-    #     if args.verbose:
-    #         print("Saving Data...")
-
-    #     df1.to_csv(f"{args.output_dir}/matrix_{args.language_1.name}_{args.stem_1}_{args.social_groups}.csv", index = False)
-    #     df2.to_csv(f"{args.output_dir}/matrix_{args.language_2.name}_{args.stem_2}_{args.social_groups}.csv", index = False)
-    #     with open(args.output_dir + f"correlation_{args.language_1.name}_{args.language_2.name}_{args.social_groups}.pkl", 'wb') as f:
-    #         pickle.dump(coeffs_emotion, f)
-    #     with open(args.output_dir + f"correlation_RSA_{args.language_1.name}_{args.language_2.name}_{args.social_groups}.pkl", 'wb') as f:
-    #         pickle.dump(coeffs_sim, f)
-        
-    #     if args.verbose:
-    #         print("Data Saved.")
-    
-    
