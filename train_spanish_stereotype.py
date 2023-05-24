@@ -56,13 +56,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Multilingual Model Stereotype Analysis.')
     parser.add_argument('--output_directory', type=str, default="./xlm-roberta-finetuned/french_fine_tuning_2", help="Output directory for trained model.")
     parser.add_argument('--model_name', type=str, default="xlm-roberta-base", help="Model to be fine-tuned")
-    parser.add_argument('--dataset_name', type=str, default="wikitext", help="Dataset name")
-    parser.add_argument('--dataset_version', type=str, default="wikitext-103-raw-v1", help="Dataset version")
     parser.add_argument('--epochs', type=int, default=5)
     parser.add_argument('--batch_size', type=int, default=8)
-    parser.add_argument('--news_source', type=str, default="Fox News")
-    parser.add_argument('--verbose', action="store_true")
-    parser.add_argument('--no_output_saving', action="store_false")
+
 
     args = parser.parse_args()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -74,7 +70,7 @@ if __name__ == "__main__":
 
     model = Models(args.model_name)
 
-    model = load_model(model, model_attributes, pre_trained = True)
+    model = load_model(model, model_attributes, 'base')
     model = model.to(device)
     csv_file = "data/data_larazon_publico_v2.csv"
     df = pd.read_csv(csv_file, names=['auto_index', 'index', 'cuerpo', 'headline'])
