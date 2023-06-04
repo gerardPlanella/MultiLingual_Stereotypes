@@ -62,3 +62,7 @@ Ideally, you want to compare the baseline emotion profiles with fine-tuned emoti
 ## Fine-tuning of the models
 
 Fine-tuning is possible through the use of all train_*.py file. Running them directly is possible. You can also change the flags for parameters such as batch_size, number of epochs, output_directory ...
+
+## Emotion Profile Analysis
+
+To perform similar analysis on the shifts of emotion profiles before and after finetuning as in our paper, you can follow the "Emotion Profile Analysis.ipynb".
