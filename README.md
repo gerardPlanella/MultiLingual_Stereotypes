@@ -49,6 +49,10 @@ Now you are ready to start working on the project!
 
 Remember to replace username, project, and env_name with the appropriate values for your project.
 
+## Generating the priors
+
+The priors are already generated and pushed to the repository so this step can be skipped. However, if wanted, one could run create_priors.py with the right arguments to regenrate them.
+
 ## Creating the emotion profiles 
 
 The first thing to do is to generate emotion profiles for given social groups for given languages. You can run the file run_test_normalization.py, it will generate emotion profiles for each social group and each language for a given model. Modify the arguments to modify either the used model or the top_k which corresponds to the number of predictions taken into account to generate the emotion profiles per social group per prompt. 
