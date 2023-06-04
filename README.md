@@ -65,7 +65,7 @@ Fine-tuning is possible through the use of all train_*.py file. Running them dir
 
 ## Fine-tuned Models
 
-The weights of the already trained models that are discussed in our paper can be found here: https://drive.google.com/drive/folders/1C4Wb43wh1FeGgojckEGCLiK0yiCKz72h?usp=sharing
+The weights of the already trained models that are discussed in our paper can be found here: https://drive.google.com/drive/folders/1VdK-m7a8uM2A6pQref9VNrMq_lryzCEV?usp=sharing
 
 ## Emotion Profile Analysis
 
