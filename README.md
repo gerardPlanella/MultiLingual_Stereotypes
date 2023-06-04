@@ -53,7 +53,7 @@ Remember to replace username, project, and env_name with the appropriate values 
 
 The first thing to do is to generate emotion profiles for given social groups for given languages. You can run the file run_test_normalization.py, it will generate emotion profiles for each social group and each language for a given model. Modify the arguments to modify either the used model or the top_k which corresponds to the number of predictions taken into account to generate the emotion profiles per social group per prompt. 
 
-You can run the emotion profiles for specific fine-tuned models by changing the --fientuned_model flag to either 'french', 'english', 'greek', 'spanish' or 'base'. 
+You can run the emotion profiles for specific fine-tuned models by changing the --finetuned_model flag to either 'french', 'english', 'greek', 'spanish' or 'base'. 
 
 ## Correlations
 
